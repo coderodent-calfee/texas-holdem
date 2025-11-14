@@ -1,0 +1,35 @@
+{
+  "name": "texas-holdem",
+  "repository": "https://github.com/coderodent-calfee/texas-holdem.git",
+  "version": "1.0.0",
+  "author": "coderodent-calfee <robert.w.calfee@gmail.com>",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "webpack serve --mode development",
+    "build": "webpack --mode production",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-native": "^0.82.1",
+    "react-native-svg": "^15.14.0",
+    "react-native-web": "^0.21.2",
+    "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.2",
+    "@svgr/webpack": "^8.1.0",
+    "@types/react": "~19.0.10",
+    "@types/react-dom": "~19.0.10",
+    "eslint": "^9.25.0",
+    "html-webpack-plugin": "^5.5.1",
+    "react-native-svg-transformer": "^1.5.1",
+    "ts-loader": "^9.4.5",
+    "typescript": "^5.9.2",
+    "webpack": "^5.88.2",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^4.15.1"
+  }
+}

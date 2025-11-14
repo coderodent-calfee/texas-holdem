@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "ESNext",
+    "jsx": "react-jsx",
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "paths": {
+      "react-native$": ["node_modules/react-native-web"]
+    },
+    "esModuleInterop": true,
+    "strict": true
+  },
+  "include": ["src"]
+}
