@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
-import SpectatorTable from "./screens/SpectatorTable";
-import { testTableState } from "./test/testData";
+import SpectatorTableWrapper from "./screens/SpectatorTableWrapper";
 
 const App = () => {
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
@@ -16,8 +15,7 @@ const App = () => {
   }
 
   return (
-    <SpectatorTable
-      tableState={testTableState}
+    <SpectatorTableWrapper
       onSelectPlayer={(id) => setSelectedPlayer(id)}
     />
   );

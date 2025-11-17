@@ -1,28 +1,74 @@
 // src/screens/SpectatorTable.tsx
-import React from "react";
+import React, { useState } from "react";
 import { View, Text } from "react-native";
 import PlayerDisplay from "../components/PlayerDisplay";
 import Card from "../components/Card";
-import type { Player, TableState } from "../types/table";
+import type { TexasHoldem } from "../types/table";
+import { BACK } from "../utils/loadCards";
 
 interface SpectatorTableProps {
-  tableState: TableState;
+  tableState: TexasHoldem.TableState;
   onSelectPlayer: (id: string) => void;
 }
 
 const SpectatorTable: React.FC<SpectatorTableProps> = ({ tableState, onSelectPlayer }) => {
   const { players, pot, liveBet, communityCards } = tableState;
 
-  if (!players || players.length === 0) return null;
+  if (!players || players.length < 2) return null;
+
+  const seatingMap: {
+    top: TexasHoldem.Player[];
+    bottom: TexasHoldem.Player[];
+    right: TexasHoldem.Player[];
+    left: TexasHoldem.Player[];
+  } = {
+    top: [],
+    bottom: [],
+    right: [],
+    left: []
+  };
+
+  if (players.length === 2) {
+    seatingMap["bottom"].push(players[0]);
+    seatingMap["top"].push(players[1]);
+  }
+  else if (players.length === 3) {
+    seatingMap["bottom"].push(players[0]);
+    seatingMap["top"].push(players[1]);
+    seatingMap["top"].push(players[2]);
+  }
+  else {
+    type seatKey = keyof typeof seatingMap;
+    const seatingCount: Record<seatKey, number> = Object.fromEntries(
+      Object.keys(seatingMap).map(key => [key, 0])
+    ) as Record<seatKey, number>;
+
+    const addOrder = Object.keys(seatingMap);
+    const seatOrder: seatKey[] = ["bottom", "left", "top", "right"];
+
+    let index = 0;
+    players.forEach((_, index) => {
+      const seat: seatKey = addOrder[index % addOrder.length] as seatKey;
+      seatingCount[seat] += 1;
+    });
+
+    let currentRow = 0;
+    index = 0;
+    players.forEach((player) => {
+      const row: seatKey = seatOrder[currentRow] as seatKey;
+      seatingMap[row].push(player);
+      if (seatingMap[row].length >= seatingCount[row]) {
+        currentRow += 1;
+      }
+      index += 1;
+    });
+
+  }
 
   // Reverse the order for clockwise display from dealer left
-  const orderedPlayers = [...players].reverse();
-
-  // Determine layout: top, middle, bottom
-  const topRow = orderedPlayers.slice(0, Math.floor(orderedPlayers.length / 3));
-  const middleRow = orderedPlayers.slice(Math.floor(orderedPlayers.length / 3), Math.ceil((orderedPlayers.length * 2) / 3));
-  const bottomRow = orderedPlayers.slice(Math.ceil((orderedPlayers.length * 2) / 3));
-
+  seatingMap.bottom = seatingMap.bottom.reverse();
+  seatingMap.left = seatingMap.left.reverse();
+console.log("communityCards =", communityCards);
   return (
     <View
       style={{
@@ -35,9 +81,17 @@ const SpectatorTable: React.FC<SpectatorTableProps> = ({ tableState, onSelectPla
       }}
     >
       {/* Top row */}
-      <View style={{ flexDirection: "row", justifyContent: "center", width: "100%" }}>
-        {topRow.map((p) => (
-          <PlayerDisplay key={p.id} player={p} onPress={() => onSelectPlayer(p.id)} />
+      <View
+        style={{
+          flexDirection: "row",
+          width: "100%",
+          paddingHorizontal: 10,
+        }}
+      >
+        {seatingMap.top.map((p) => (
+          <View key={p.base.playerId} style={{ flex: 1, alignItems: "center" }}>
+            <PlayerDisplay player={p} onPress={() => onSelectPlayer(p.base.playerId)} />
+          </View>
         ))}
       </View>
 
@@ -50,27 +104,45 @@ const SpectatorTable: React.FC<SpectatorTableProps> = ({ tableState, onSelectPla
           width: "100%",
         }}
       >
-        {middleRow[0] && <PlayerDisplay player={middleRow[0]} onPress={() => onSelectPlayer(middleRow[0].id)} />}
+        <View style={{ flexDirection: "column", justifyContent: "center" }}>
+          {seatingMap.left.map((p) => (
+            <PlayerDisplay player={p} onPress={() => onSelectPlayer(p.base.playerId)} />
+          ))}
+        </View>
 
         <View style={{ alignItems: "center" }}>
           <Text style={{ fontSize: 20, fontWeight: "bold" }}>Pot: {pot}</Text>
           <Text>Live Bet: {liveBet}</Text>
           <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>
-            {communityCards.map((c) => (
-              <Card key={c} code={c} width={70} height={100} />
-            ))}
+            {communityCards.map((c) => {
+              console.log("communityCard =", c);
+              return (<Card key={c} code={c} width={70} height={100} />);
+            })}
           </View>
         </View>
+        <View style={{ flexDirection: "column", justifyContent: "center" }}>
+          {seatingMap.right.map((p) => (
+            <PlayerDisplay player={p} onPress={() => onSelectPlayer(p.base.playerId)} />
+          ))}
+        </View>
 
-        {middleRow[1] && <PlayerDisplay player={middleRow[1]} onPress={() => onSelectPlayer(middleRow[1].id)} />}
       </View>
 
       {/* Bottom row */}
-      <View style={{ flexDirection: "row", justifyContent: "center", width: "100%" }}>
-        {bottomRow.map((p) => (
-          <PlayerDisplay key={p.id} player={p} onPress={() => onSelectPlayer(p.id)} />
+      <View
+        style={{
+          flexDirection: "row",
+          width: "100%",
+          paddingHorizontal: 10,
+        }}
+      >
+        {seatingMap.bottom.map((p) => (
+          <View key={p.base.playerId} style={{ flex: 1, alignItems: "center" }}>
+            <PlayerDisplay player={p} onPress={() => onSelectPlayer(p.base.playerId)} />
+          </View>
         ))}
       </View>
+
     </View>
   );
 };

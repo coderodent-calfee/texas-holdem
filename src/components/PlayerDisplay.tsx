@@ -2,14 +2,14 @@ import React from "react";
 import { View, Text, Image, Pressable } from "react-native";
 import Card from "./Card";
 import Logo from "./Logo";
-import type { Player, TableState } from "../types/table";
+import type { TexasHoldem  } from "../types/table";
 import { BACK, CARD_SIZE } from "../utils/loadCards";
 
 const PlayerDisplay = ({
   player,
   onPress,
 }: {
-  player: Player;
+  player: TexasHoldem.Player;
   onPress?: () => void;
 }) => {
   const grey = !player.active;
@@ -26,7 +26,7 @@ const PlayerDisplay = ({
     >
       <Logo size={50} />
 
-      <Text style={{ fontWeight: "bold" }}>{player.name}</Text>
+      <Text style={{ fontWeight: "bold" }}>{player.base.name}</Text>
       <Text>{player.chips} chips</Text>
 
       <View style={{ flexDirection: "row", gap: 4, marginTop: 4 }}>

@@ -1,23 +1,24 @@
 import { CardCode } from "src/utils/loadCards";
 
 // src/types/table.ts
-export interface Player {
-    id: string;
-    name: string;
-    chips: number;
-    active: boolean;
+export namespace TexasHoldem {
+    export interface Player {
+        base: import("../types/Player").Player; // your global Player type
 
-    isDealer: boolean;
-    isSmallBlind: boolean;
-    isBigBlind: boolean;
-    holeCards: CardCode[],
-}
+        chips: number;
+        active: boolean; // playing, folded, busted, or not connected
+        isDealer: boolean;
+        isSmallBlind: boolean;
+        isBigBlind: boolean;
+        holeCards: CardCode[],
+    }
 
-export interface TableState {
-    players: Player[];
-    pot: number;
-    liveBet: number;
+    export interface TableState {
+        players: Player[];
+        pot: number;
+        liveBet: number;
 
-    // array of card codes like "AS" or "TD"
-    communityCards: string[];
+        // array of card codes like "AS" or "TD"
+        communityCards: string[];
+    }
 }
