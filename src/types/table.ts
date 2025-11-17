@@ -1,3 +1,4 @@
+// src/types/table
 import { CardCode } from "src/utils/loadCards";
 
 // src/types/table.ts

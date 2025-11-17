@@ -1,10 +1,10 @@
-// src/logic/HoldemEngine.ts
+// src/engine/HoldemEngine.ts
 import type { GameStore } from "./GameStore";
 import type { TexasHoldem } from "../types/table";
-import { CardCode } from "src/utils/loadCards";
+import { BACK, CardCode } from "../utils/loadCards";
 
 export class HoldemEngine {
-  constructor(private store: GameStore) {}
+  constructor(private store: GameStore) { }
 
   /** Deal hole cards to each Hold'em player */
   dealHoleCards() {
@@ -13,7 +13,7 @@ export class HoldemEngine {
 
     this.store.updateState((state) => {
       players.forEach((p, i) => {
-        p.holeCards = [deck[i * 2] as CardCode, deck[i * 2 + 1]as CardCode];
+        p.holeCards = [deck[i * 2] as CardCode, deck[i * 2 + 1] as CardCode];
       });
     });
   }
@@ -23,7 +23,7 @@ export class HoldemEngine {
     const deck = this.store.getDeck();
     this.store.updateState((state) => {
       state.communityCards = deck.slice(2 * this.store.getPlayers().length + 1,   // after hole cards + burn
-                                        2 * this.store.getPlayers().length + 4);  // 3 flop cards
+        2 * this.store.getPlayers().length + 4);  // 3 flop cards
     });
   }
 
@@ -31,8 +31,8 @@ export class HoldemEngine {
   revealTurn() {
     const deck = this.store.getDeck();
     const offset = 2 * this.store.getPlayers().length + 4; // after flop
-    this.store.updateState((state) => {state.communityCards.push(deck[offset + 1]);} );
-//    this.store.updateState((state) => {state.communityCards.push(deck[offset + 1]); return;});
+    this.store.updateState((state) => { state.communityCards.push(deck[offset + 1]); });
+    //    this.store.updateState((state) => {state.communityCards.push(deck[offset + 1]); return;});
   }
 
   /** Reveal the river (burn 1, reveal 1) */
@@ -43,4 +43,22 @@ export class HoldemEngine {
       state.communityCards.push(deck[offset + 1]);
     });
   }
+
+  /** Reveal active players' hole cards */
+  revealHoleCards() {
+    const players = this.store.getPlayers();
+    const deck = this.store.getDeck();
+
+    this.store.updateState((state) => {
+      players.forEach((p, i) => {
+        if (p.active) {
+          // If you haven't dealt, assign cards from deck
+          if (p.holeCards.every((c) => c === BACK)) {
+            p.holeCards = [deck[i * 2], deck[i * 2 + 1]];
+          }
+        }
+      });
+    });
+  }
+
 }

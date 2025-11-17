@@ -68,14 +68,40 @@ const SpectatorTable: React.FC<SpectatorTableProps> = ({ tableState, onSelectPla
   // Reverse the order for clockwise display from dealer left
   seatingMap.bottom = seatingMap.bottom.reverse();
   seatingMap.left = seatingMap.left.reverse();
-console.log("communityCards =", communityCards);
-  return (
+  console.log("communityCards =", communityCards);
+return (
+  <View
+    style={{
+      width: "100%",
+      height: "100%",
+      backgroundColor: "green",
+      padding: 20,
+      flexDirection: "row", // outermost row
+      justifyContent: "space-between",
+      alignItems: "stretch",
+    }}
+  >
+    {/* --- Left column: left players top-to-bottom --- */}
     <View
       style={{
-        width: "100%",
-        height: "100%",
-        backgroundColor: "green",
-        padding: 20,
+        flexDirection: "column",
+        justifyContent: "center",
+      }}
+    >
+      {seatingMap.left.map((p) => (
+        <PlayerDisplay
+          key={p.base.playerId}
+          player={p}
+          onPress={() => onSelectPlayer(p.base.playerId)}
+        />
+      ))}
+    </View>
+
+    {/* --- Middle column: top row, center (pot + community), bottom row --- */}
+    <View
+      style={{
+        flex: 1,
+        flexDirection: "column",
         justifyContent: "space-between",
         alignItems: "center",
       }}
@@ -84,67 +110,150 @@ console.log("communityCards =", communityCards);
       <View
         style={{
           flexDirection: "row",
+          justifyContent: "center",
           width: "100%",
           paddingHorizontal: 10,
         }}
       >
         {seatingMap.top.map((p) => (
           <View key={p.base.playerId} style={{ flex: 1, alignItems: "center" }}>
-            <PlayerDisplay player={p} onPress={() => onSelectPlayer(p.base.playerId)} />
+            <PlayerDisplay
+              player={p}
+              onPress={() => onSelectPlayer(p.base.playerId)}
+            />
           </View>
         ))}
       </View>
 
-      {/* Middle row: left/right players with pot & community cards in center */}
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "center",
-          width: "100%",
-        }}
-      >
-        <View style={{ flexDirection: "column", justifyContent: "center" }}>
-          {seatingMap.left.map((p) => (
-            <PlayerDisplay player={p} onPress={() => onSelectPlayer(p.base.playerId)} />
+      {/* Center: pot & community cards */}
+      <View style={{ 
+        alignItems: "center",
+        minHeight: 154, 
+      }}>
+        <Text style={{ fontSize: 20, fontWeight: "bold" }}>Pot: {pot}</Text>
+        <Text>Live Bet: {liveBet}</Text>
+        <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>
+          {communityCards.map((c) => (
+            <Card key={c} code={c} width={70} height={100} />
           ))}
         </View>
-
-        <View style={{ alignItems: "center" }}>
-          <Text style={{ fontSize: 20, fontWeight: "bold" }}>Pot: {pot}</Text>
-          <Text>Live Bet: {liveBet}</Text>
-          <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>
-            {communityCards.map((c) => {
-              console.log("communityCard =", c);
-              return (<Card key={c} code={c} width={70} height={100} />);
-            })}
-          </View>
-        </View>
-        <View style={{ flexDirection: "column", justifyContent: "center" }}>
-          {seatingMap.right.map((p) => (
-            <PlayerDisplay player={p} onPress={() => onSelectPlayer(p.base.playerId)} />
-          ))}
-        </View>
-
       </View>
 
       {/* Bottom row */}
       <View
         style={{
           flexDirection: "row",
+          justifyContent: "center",
           width: "100%",
           paddingHorizontal: 10,
         }}
       >
         {seatingMap.bottom.map((p) => (
           <View key={p.base.playerId} style={{ flex: 1, alignItems: "center" }}>
-            <PlayerDisplay player={p} onPress={() => onSelectPlayer(p.base.playerId)} />
+            <PlayerDisplay
+              player={p}
+              onPress={() => onSelectPlayer(p.base.playerId)}
+            />
           </View>
         ))}
       </View>
-
     </View>
-  );
+
+    {/* --- Right column: right players top-to-bottom --- */}
+    <View
+      style={{
+        flexDirection: "column",
+        justifyContent: "center",
+      }}
+    >
+      {seatingMap.right.map((p) => (
+        <PlayerDisplay
+          key={p.base.playerId}
+          player={p}
+          onPress={() => onSelectPlayer(p.base.playerId)}
+        />
+      ))}
+    </View>
+  </View>
+);
 };
 
 export default SpectatorTable;
+
+
+  // return (
+  //   <View
+  //     style={{
+  //       width: "100%",
+  //       height: "100%",
+  //       backgroundColor: "green",
+  //       padding: 20,
+  //       justifyContent: "space-between",
+  //       alignItems: "center",
+  //     }}
+  //   >
+  //     {/* Top row */}
+  //     <View
+  //       style={{
+  //         flexDirection: "row",
+  //         width: "100%",
+  //         paddingHorizontal: 10,
+  //       }}
+  //     >
+  //       {seatingMap.top.map((p) => (
+  //         <View key={p.base.playerId} style={{ flex: 1, alignItems: "center" }}>
+  //           <PlayerDisplay player={p} onPress={() => onSelectPlayer(p.base.playerId)} />
+  //         </View>
+  //       ))}
+  //     </View>
+
+  //     {/* Middle row: left/right players with pot & community cards in center */}
+  //     <View
+  //       style={{
+  //         flexDirection: "row",
+  //         justifyContent: "space-between",
+  //         alignItems: "center",
+  //         width: "100%",
+  //       }}
+  //     >
+  //       <View style={{ flexDirection: "column", justifyContent: "center" }}>
+  //         {seatingMap.left.map((p) => (
+  //           <PlayerDisplay player={p} onPress={() => onSelectPlayer(p.base.playerId)} />
+  //         ))}
+  //       </View>
+
+  //       <View style={{ alignItems: "center" }}>
+  //         <Text style={{ fontSize: 20, fontWeight: "bold" }}>Pot: {pot}</Text>
+  //         <Text>Live Bet: {liveBet}</Text>
+  //         <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>
+  //           {communityCards.map((c) => {
+  //             console.log("communityCard =", c);
+  //             return (<Card key={c} code={c} width={70} height={100} />);
+  //           })}
+  //         </View>
+  //       </View>
+  //       <View style={{ flexDirection: "column", justifyContent: "center" }}>
+  //         {seatingMap.right.map((p) => (
+  //           <PlayerDisplay player={p} onPress={() => onSelectPlayer(p.base.playerId)} />
+  //         ))}
+  //       </View>
+
+  //     </View>
+
+  //     {/* Bottom row */}
+  //     <View
+  //       style={{
+  //         flexDirection: "row",
+  //         width: "100%",
+  //         paddingHorizontal: 10,
+  //       }}
+  //     >
+  //       {seatingMap.bottom.map((p) => (
+  //         <View key={p.base.playerId} style={{ flex: 1, alignItems: "center" }}>
+  //           <PlayerDisplay player={p} onPress={() => onSelectPlayer(p.base.playerId)} />
+  //         </View>
+  //       ))}
+  //     </View>
+
+  //   </View>
+  // );
