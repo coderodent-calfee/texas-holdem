@@ -1,15 +1,21 @@
-import { CardCode } from "../utils/loadCards";
-import type { Game } from "../types/Game";
-import type { TexasHoldem  } from "../types/table";
-
+import type { EngineState, EnginePlayer, EnginePublicState } from "../engine/TexasHoldemEngine";
+import type { CardCode } from "../engine/cards";
 
 export interface GameStore {
-  getGame(): Game;
-  getPlayers(): TexasHoldem.Player[];
-  getState(): TexasHoldem.TableState;
+  // Accessors
+  getEngineState(): EngineState;
+  getPublicState(): EnginePublicState;
+  getPlayers(): EnginePlayer[];
 
-  updateState(updater: (s: TexasHoldem.TableState) => void): void;
+  // Game progression
+  step(): boolean;
 
-  getDeck(): CardCode[];
-  shuffleDeck(): void;
+  // Hand resets
+  resetHand(): void;
+  resetHandWithDeck(deck: CardCode[]): void;
+
+  // Player management
+  setPlayers(players: EnginePlayer[]): void;
+  increasePlayerCount(): void;
+  decreasePlayerCount(): void;
 }

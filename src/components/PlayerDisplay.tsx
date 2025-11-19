@@ -2,17 +2,23 @@ import React from "react";
 import { View, Text, Image, Pressable } from "react-native";
 import Card from "./Card";
 import Logo from "./Logo";
-import type { TexasHoldem  } from "../types/table";
-import { BACK, CARD_SIZE } from "../utils/loadCards";
+import { BACK, CARD_SIZE, CardCode } from "../engine/cards";
+import {
+  EngineState,
+  EnginePlayer,
+  EnginePublicState,
+  TexasHoldemEngine
+} from "../engine/TexasHoldemEngine";
+
 
 const PlayerDisplay = ({
   player,
   onPress,
 }: {
-  player: TexasHoldem.Player;
+  player: EnginePlayer;
   onPress?: () => void;
 }) => {
-  const grey = !player.active;
+  const grey = player.folded;
 
   return (
     <Pressable
@@ -26,31 +32,31 @@ const PlayerDisplay = ({
     >
       <Logo size={50} />
 
-      <Text style={{ fontWeight: "bold" }}>{player.base.name}</Text>
+      <Text style={{ fontWeight: "bold" }}>{player.name}</Text>
       <Text>{player.chips} chips</Text>
 
       <View style={{ flexDirection: "row", gap: 4, marginTop: 4 }}>
-        {(player.holeCards.length
-          ? player.holeCards
-          : [BACK, BACK] // default to two face-down cards
-        ).map((code, idx) => (
-          <Card key={idx} code={code} {...CARD_SIZE.SMALL} />
+        {(player?.holeCards && player.holeCards.map( (code : CardCode, idx) => 
+          (<Card key={idx} code={code} {...CARD_SIZE.SMALL} />)
         ))}
       </View>
 
-      <View style={{ flexDirection: "row", marginTop: 4, gap: 4 }}>
-        {player.isDealer && (
-          <Text style={{ backgroundColor: "gold", padding: 2 }}>D</Text>
-        )}
-        {player.isSmallBlind && (
-          <Text style={{ backgroundColor: "lightblue", padding: 2 }}>SB</Text>
-        )}
-        {player.isBigBlind && (
-          <Text style={{ backgroundColor: "lightgreen", padding: 2 }}>BB</Text>
-        )}
-      </View>
+
     </Pressable>
   );
 };
 
 export default PlayerDisplay;
+
+
+      // <View style={{ flexDirection: "row", marginTop: 4, gap: 4 }}>
+      //   {player.isDealer && (
+      //     <Text style={{ backgroundColor: "gold", padding: 2 }}>D</Text>
+      //   )}
+      //   {player.isSmallBlind && (
+      //     <Text style={{ backgroundColor: "lightblue", padding: 2 }}>SB</Text>
+      //   )}
+      //   {player.isBigBlind && (
+      //     <Text style={{ backgroundColor: "lightgreen", padding: 2 }}>BB</Text>
+      //   )}
+      // </View>

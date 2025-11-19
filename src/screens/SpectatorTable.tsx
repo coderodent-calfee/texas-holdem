@@ -3,24 +3,37 @@ import React, { useState } from "react";
 import { View, Text } from "react-native";
 import PlayerDisplay from "../components/PlayerDisplay";
 import Card from "../components/Card";
-import type { TexasHoldem } from "../types/table";
-import { BACK } from "../utils/loadCards";
+import { BACK } from "../engine/cards";
+import { GameStore } from "../engine/GameStore";
+import {
+  EngineState,
+  EnginePlayer,
+  EnginePublicState,
+  TexasHoldemEngine
+} from "../engine/TexasHoldemEngine";
 
 interface SpectatorTableProps {
-  tableState: TexasHoldem.TableState;
+  store: GameStore;
   onSelectPlayer: (id: string) => void;
 }
 
-const SpectatorTable: React.FC<SpectatorTableProps> = ({ tableState, onSelectPlayer }) => {
-  const { players, pot, liveBet, communityCards } = tableState;
+const SpectatorTable: React.FC<SpectatorTableProps> = ({ store, onSelectPlayer }) => {
+  const {   state,
+    players,
+    communityCards,
+    dealer,
+    pot,
+    minBet,
+    toCall,
+  } = store.getPublicState();
 
   if (!players || players.length < 2) return null;
 
   const seatingMap: {
-    top: TexasHoldem.Player[];
-    bottom: TexasHoldem.Player[];
-    right: TexasHoldem.Player[];
-    left: TexasHoldem.Player[];
+    top: EnginePlayer[];
+    bottom: EnginePlayer[];
+    right: EnginePlayer[];
+    left: EnginePlayer[];
   } = {
     top: [],
     bottom: [],
@@ -90,9 +103,9 @@ return (
     >
       {seatingMap.left.map((p) => (
         <PlayerDisplay
-          key={p.base.playerId}
+          key={p.id}
           player={p}
-          onPress={() => onSelectPlayer(p.base.playerId)}
+          onPress={() => onSelectPlayer(p.id)}
         />
       ))}
     </View>
@@ -116,10 +129,10 @@ return (
         }}
       >
         {seatingMap.top.map((p) => (
-          <View key={p.base.playerId} style={{ flex: 1, alignItems: "center" }}>
+          <View key={p.id} style={{ flex: 1, alignItems: "center" }}>
             <PlayerDisplay
               player={p}
-              onPress={() => onSelectPlayer(p.base.playerId)}
+              onPress={() => onSelectPlayer(p.id)}
             />
           </View>
         ))}
@@ -131,7 +144,7 @@ return (
         minHeight: 154, 
       }}>
         <Text style={{ fontSize: 20, fontWeight: "bold" }}>Pot: {pot}</Text>
-        <Text>Live Bet: {liveBet}</Text>
+        <Text>Live Bet: {toCall}</Text>
         <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>
           {communityCards.map((c) => (
             <Card key={c} code={c} width={70} height={100} />
@@ -149,10 +162,10 @@ return (
         }}
       >
         {seatingMap.bottom.map((p) => (
-          <View key={p.base.playerId} style={{ flex: 1, alignItems: "center" }}>
+          <View key={p.id} style={{ flex: 1, alignItems: "center" }}>
             <PlayerDisplay
               player={p}
-              onPress={() => onSelectPlayer(p.base.playerId)}
+              onPress={() => onSelectPlayer(p.id)}
             />
           </View>
         ))}
@@ -168,9 +181,9 @@ return (
     >
       {seatingMap.right.map((p) => (
         <PlayerDisplay
-          key={p.base.playerId}
+          key={p.id}
           player={p}
-          onPress={() => onSelectPlayer(p.base.playerId)}
+          onPress={() => onSelectPlayer(p.id)}
         />
       ))}
     </View>
@@ -180,80 +193,3 @@ return (
 
 export default SpectatorTable;
 
-
-  // return (
-  //   <View
-  //     style={{
-  //       width: "100%",
-  //       height: "100%",
-  //       backgroundColor: "green",
-  //       padding: 20,
-  //       justifyContent: "space-between",
-  //       alignItems: "center",
-  //     }}
-  //   >
-  //     {/* Top row */}
-  //     <View
-  //       style={{
-  //         flexDirection: "row",
-  //         width: "100%",
-  //         paddingHorizontal: 10,
-  //       }}
-  //     >
-  //       {seatingMap.top.map((p) => (
-  //         <View key={p.base.playerId} style={{ flex: 1, alignItems: "center" }}>
-  //           <PlayerDisplay player={p} onPress={() => onSelectPlayer(p.base.playerId)} />
-  //         </View>
-  //       ))}
-  //     </View>
-
-  //     {/* Middle row: left/right players with pot & community cards in center */}
-  //     <View
-  //       style={{
-  //         flexDirection: "row",
-  //         justifyContent: "space-between",
-  //         alignItems: "center",
-  //         width: "100%",
-  //       }}
-  //     >
-  //       <View style={{ flexDirection: "column", justifyContent: "center" }}>
-  //         {seatingMap.left.map((p) => (
-  //           <PlayerDisplay player={p} onPress={() => onSelectPlayer(p.base.playerId)} />
-  //         ))}
-  //       </View>
-
-  //       <View style={{ alignItems: "center" }}>
-  //         <Text style={{ fontSize: 20, fontWeight: "bold" }}>Pot: {pot}</Text>
-  //         <Text>Live Bet: {liveBet}</Text>
-  //         <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>
-  //           {communityCards.map((c) => {
-  //             console.log("communityCard =", c);
-  //             return (<Card key={c} code={c} width={70} height={100} />);
-  //           })}
-  //         </View>
-  //       </View>
-  //       <View style={{ flexDirection: "column", justifyContent: "center" }}>
-  //         {seatingMap.right.map((p) => (
-  //           <PlayerDisplay player={p} onPress={() => onSelectPlayer(p.base.playerId)} />
-  //         ))}
-  //       </View>
-
-  //     </View>
-
-  //     {/* Bottom row */}
-  //     <View
-  //       style={{
-  //         flexDirection: "row",
-  //         width: "100%",
-  //         paddingHorizontal: 10,
-  //       }}
-  //     >
-  //       {seatingMap.bottom.map((p) => (
-  //         <View key={p.base.playerId} style={{ flex: 1, alignItems: "center" }}>
-  //           <PlayerDisplay player={p} onPress={() => onSelectPlayer(p.base.playerId)} />
-  //         </View>
-  //       ))}
-  //     </View>
-
-  //   </View>
-  // );

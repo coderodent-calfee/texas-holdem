@@ -1,14 +1,20 @@
 // src/engine/TexasHoldemEngine.ts
 import { CardCode, generateDeck, shuffle, BACK } from "../engine/cards"; // adjust path if your cards file is elsewhere
 
-export type EngineState =
-  | "deal"
-  | "preflop"
-  | "flop"
-  | "turn"
-  | "river"
-  | "showdown"
-  | "reveal";
+
+export const ENGINE_STATES = [
+   "deal",
+   "preflop",
+   "flop",
+   "turn",
+   "river",
+   "showdown",
+   "reveal"
+] as const;
+
+
+
+export type EngineState = (typeof ENGINE_STATES)[number];
 
 export interface EnginePlayer {
   id: string;
@@ -51,15 +57,11 @@ export class TexasHoldemEngine {
   // ---------------------------------------------------------------------------
 
   /** Called by the store to push the current list of players */
-  setPlayers(players: { id: string; seat: number; chips: number }[]) {
-    this.players = players.map((p) => ({
-      id: p.id,
-      seat: p.seat,
-      chips: p.chips,
-      committed: 0,
-      folded: false,
-      holeCards: null,
-    }));
+  setPlayers(players: EnginePlayer[]) {
+console.log("setting this.players ", this.players);
+    
+    this.players = [...players];
+console.log("to this.players ", this.players);
   }
 
   /** Begin a new hand with a random deck */
@@ -128,7 +130,11 @@ export class TexasHoldemEngine {
     this.pot = 0;
     this.minBet = 0;
     this.toCall = 0;
-
+console.log("this.players ", this.players);
+  if (!Array.isArray(this.players)) {
+    console.warn("players is not an array, resetting to empty array", this.players);
+    this.players = [];
+  }
     for (const p of this.players) {
       p.committed = 0;
       p.folded = false;

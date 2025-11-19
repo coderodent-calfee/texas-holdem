@@ -1,26 +1,25 @@
 // src/components/EngineStateTester
-import React, { useState } from "react";
+import React from "react";
 import { View, Button, Text } from "react-native";
-
-const ENGINE_STATES = ["deal", "preflop", "flop", "turn", "river", "showdown", "reveal"] as const;
-export type EngineState = (typeof ENGINE_STATES)[number];
+import { ENGINE_STATES, EngineState } from "../engine/TexasHoldemEngine";
 
 interface Props {
-  /** Called when advancing the engine to the next state */
+  /** The current engine state from the engine/store */
+  engineState: EngineState;
+
+  /* Called when requesting to advance the engine */
   onAdvanceEngine?: (nextState: EngineState) => void;
 }
 
-export default function EngineStateTester({ onAdvanceEngine }: Props) {
-  const [engineState, setEngineState] = useState<EngineState>(ENGINE_STATES[0]);
-
-  // Compute the next state
+export default function EngineStateTester({ engineState, onAdvanceEngine }: Props) {
+  
+  // Compute next state from the prop value
   const currentIndex = ENGINE_STATES.indexOf(engineState);
   const nextIndex = (currentIndex + 1) % ENGINE_STATES.length;
   const nextEngineState = ENGINE_STATES[nextIndex];
 
   const nextState = () => {
-    setEngineState(nextEngineState);        // update local display
-    onAdvanceEngine?.(nextEngineState);       // call external engine function
+    onAdvanceEngine?.(nextEngineState);
   };
 
   const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
@@ -31,8 +30,10 @@ export default function EngineStateTester({ onAdvanceEngine }: Props) {
         {capitalize(engineState)}
       </Text>
 
-      <Button title={`Advance to ${capitalize(nextEngineState)}`}
-       onPress={nextState} />
+      <Button
+        title={`Advance to ${capitalize(nextEngineState)}`}
+        onPress={nextState}
+      />
     </View>
   );
 }

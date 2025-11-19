@@ -42,6 +42,8 @@ export class LocalGameStore {
   constructor() {
     this.engine = new TexasHoldemEngine();
     this.initializeFromFake();
+    // Capture initial public state
+    this.publicState = this.getPublicState();
   }
 
   // ---------------------------------------------------
@@ -76,9 +78,10 @@ export class LocalGameStore {
   // (for local testing this might simulate dealing,
   // progressing betting rounds, etc.)
   // ---------------------------------------------------
-  step() {
-    this.engine.step();
+  step(): boolean {
+    const canContinue = this.engine.step();
     this.publicState = this.getPublicState();
+    return canContinue;
   }
 
   // ---------------------------------------------------
@@ -152,41 +155,3 @@ export class LocalGameStore {
 }
 
 
-
-//   // ---------------------------------------------------------
-//   // Game Controls
-//   // ---------------------------------------------------------
-//   step() {
-//     this.engine.step();
-//     this.publicState = this.engine.getPublicState();
-//   }
-
-//   resetHand() {
-//     this.engine.resetHand();
-//     this.publicState = this.engine.getPublicState();
-//   }
-
-//   resetHandWithDeck(deck: string[]) {
-//     this.engine.resetHandWithDeck(deck);
-//     this.publicState = this.engine.getPublicState();
-//   }
-
-//   // ---------------------------------------------------------
-//   // Accessors for UI / wrapper
-//   // ---------------------------------------------------------
-//   getEngineState(): EngineState {
-//     return this.engine.state;
-//   }
-
-//   getPublicState(): EnginePublicState {
-//     return this.publicState;
-//   }
-
-//   getPlayers(): EnginePlayer[] {
-//     return this.enginePlayers;
-//   }
-
-//   getPlayerCount(): number {
-//     return this.playerCount;
-//   }
-// }
