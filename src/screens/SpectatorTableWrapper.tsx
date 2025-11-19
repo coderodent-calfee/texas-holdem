@@ -1,98 +1,96 @@
-// src/screens/SpectatorTableWrapper.tsx
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { View, Button, Text } from "react-native";
-import SpectatorTable from "./SpectatorTable";
 import { LocalGameStore } from "../engine/LocalGameStore";
-import { fakeGame } from "../data/fakeGame"; // the fake Game you created
-import EngineStateTester from "../components/EngineStateTester";
-import { HoldemEngine } from "../engine/HoldemEngine";
+import { EngineState, CardCode } from "../engine/cards";
+import { PlayerDisplay } from "../components/PlayerDisplay";
+import { Card } from "../components/Card";
 
-interface Props {
-  onSelectPlayer: (id: string) => void;
-}
+// store instance
+const store = new LocalGameStore();
 
-export default function SpectatorTableWrapper({ onSelectPlayer }: Props) {
-  // --- Stable local store ---
-  const store = useMemo(() => new LocalGameStore(fakeGame), []);
-  // --- Holdem engine for controlling phases ---
-  const engine = useMemo(() => new HoldemEngine(store), [store]);
-  const [, forceRender] = useState(0);
+export const SpectatorTableWrapper: React.FC = () => {
+  const [, forceUpdate] = useState(0); // trigger re-render
 
-
-  // Full internal gameplay state
-  const fullState = store.getState();
-  const fullPlayers = store.getPlayers();
-
-  // --- Visible player count ---
-  const [playerCount, setPlayerCount] = useState(7);
-  const clamp = (v: number) => Math.min(Math.max(v, 2), 10);
-
-  const visiblePlayers = fullPlayers.slice(0, playerCount);
-
-  // --- Debug Gameplay Controls ---
-  const [dealerIndex, setDealerIndex] = useState(0);
-
-  const nextPlayer = () => {
-    setDealerIndex((dealerIndex + 1) % visiblePlayers.length);
+  // --- Player count controls ---
+  const addPlayer = () => {
+    if (store.getPlayers().length >= 10) return;
+    store.addPlayer();
+    forceUpdate((v) => v + 1);
   };
 
-  // --- Build modified view of table state ---
-  const uiPlayers = visiblePlayers.map((p, idx) => ({
-    ...p,
-    isDealer: idx === dealerIndex,
-  }));
+  const removePlayer = () => {
+    if (store.getPlayers().length <= 2) return;
+    store.removePlayer();
+    forceUpdate((v) => v + 1);
+  };
 
-  const uiCommunityCards = fullState.communityCards;
+  // --- Engine controls ---
+  const advanceEngine = () => {
+    store.advanceEngine();
+    forceUpdate((v) => v + 1);
+  };
+
+  // --- Table data ---
+  const table = store.getSnapshotForTable();
+  const state = store.getCurrentEngineState();
+  const nextState = store.getNextEngineState();
 
   return (
-    <View style={{ flex: 1 }}>
-      {/* Player Count Controls */}
-      <View style={{ flexDirection: "row", justifyContent: "center", marginBottom: 10, gap: 10 }}>
-        <Button title="−" onPress={() => setPlayerCount(clamp(playerCount - 1))} />
-        <Text style={{ alignSelf: "center", marginHorizontal: 10 }}>{playerCount} players</Text>
-        <Button title="+" onPress={() => setPlayerCount(clamp(playerCount + 1))} />
+    <View style={{ flex: 1, padding: 10 }}>
+      {/* Player count controls */}
+      <View style={{ flexDirection: "row", justifyContent: "center", marginBottom: 10 }}>
+        <Button title="Add Player" onPress={addPlayer} />
+        <Text style={{ marginHorizontal: 20 }}>Players: {store.getPlayers().length}</Text>
+        <Button title="Remove Player" onPress={removePlayer} />
       </View>
 
-      {/* Debug Controls */}
-      <View style={{ flexDirection: "row", justifyContent: "space-evenly", marginBottom: 10 }}>
-        <Button title="Next Player" onPress={nextPlayer} />
-        <EngineStateTester
-          onAdvanceEngine={(nextState) => {
-            console.log("next state");
-            switch (nextState) {
-              case "preflop":
-                engine.dealHoleCards();
-                break;
-              case "flop":
-                engine.revealFlop();
-                break;
-              case "turn":
-                engine.revealTurn();
-                break;
-              case "river":
-                engine.revealRiver();
-                break;
-              case "showdown":
-                store.shuffleDeck(); // optional: reset hand
-                break;
-            }
-            forceRender(x => x + 1);
-
-          }}
-        />
-
-
+      {/* Engine advance button */}
+      <View style={{ alignItems: "center", marginBottom: 10 }}>
+        <Text>Current State: {state}</Text>
+        <Text>Next State: {nextState}</Text>
+        <Button title="Advance Engine" onPress={advanceEngine} />
       </View>
 
-      {/* Actual Spectator Table */}
-      <SpectatorTable
-        tableState={{
-          ...fullState,
-          players: uiPlayers,
-          communityCards: uiCommunityCards,
-        }}
-        onSelectPlayer={onSelectPlayer}
-      />
+      {/* Table rendering */}
+      <View style={{ flex: 1, backgroundColor: "green", padding: 10 }}>
+        {/* Top row */}
+        <View style={{ flexDirection: "row", justifyContent: "center" }}>
+          {table.top.map((p) => (
+            <PlayerDisplay key={p.id} player={p} />
+          ))}
+        </View>
+
+        {/* Center row: left, community, right */}
+        <View style={{ flexDirection: "row", justifyContent: "space-between", flex: 1 }}>
+          <View>
+            {table.left.map((p) => (
+              <PlayerDisplay key={p.id} player={p} />
+            ))}
+          </View>
+
+          <View style={{ alignItems: "center" }}>
+            <Text>Pot: {table.pot}</Text>
+            <View style={{ flexDirection: "row", marginTop: 5 }}>
+              {table.communityCards.map((c: CardCode, i: number) => (
+                <Card key={i} code={c} width={70} height={100} />
+              ))}
+            </View>
+          </View>
+
+          <View>
+            {table.right.map((p) => (
+              <PlayerDisplay key={p.id} player={p} />
+            ))}
+          </View>
+        </View>
+
+        {/* Bottom row */}
+        <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 10 }}>
+          {table.bottom.map((p) => (
+            <PlayerDisplay key={p.id} player={p} />
+          ))}
+        </View>
+      </View>
     </View>
   );
-}
+};

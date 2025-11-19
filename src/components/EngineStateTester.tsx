@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { View, Button, Text } from "react-native";
 
-const ENGINE_STATES = ["preflop", "flop", "turn", "river", "showdown", "reveal"] as const;
+const ENGINE_STATES = ["deal", "preflop", "flop", "turn", "river", "showdown", "reveal"] as const;
 export type EngineState = (typeof ENGINE_STATES)[number];
 
 interface Props {
@@ -11,7 +11,7 @@ interface Props {
 }
 
 export default function EngineStateTester({ onAdvanceEngine }: Props) {
-  const [engineState, setEngineState] = useState<EngineState>("preflop");
+  const [engineState, setEngineState] = useState<EngineState>(ENGINE_STATES[0]);
 
   // Compute the next state
   const currentIndex = ENGINE_STATES.indexOf(engineState);
