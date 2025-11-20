@@ -1,6 +1,6 @@
 // src/screens/SpectatorTable.tsx
 import React, { useState } from "react";
-import { View, Text } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import PlayerDisplay from "../components/PlayerDisplay";
 import Card from "../components/Card";
 import { BACK } from "../engine/cards";
@@ -83,113 +83,144 @@ const SpectatorTable: React.FC<SpectatorTableProps> = ({ store, onSelectPlayer }
   seatingMap.left = seatingMap.left.reverse();
   console.log("communityCards =", communityCards);
 return (
-  <View
-    style={{
-      width: "100%",
-      height: "100%",
-      backgroundColor: "green",
-      padding: 20,
-      flexDirection: "row", // outermost row
-      justifyContent: "space-between",
-      alignItems: "stretch",
-    }}
-  >
-    {/* --- Left column: left players top-to-bottom --- */}
-    <View
-      style={{
-        flexDirection: "column",
-        justifyContent: "center",
-      }}
-    >
-      {seatingMap.left.map((p) => (
-        <PlayerDisplay
-          key={p.id}
-          player={p}
-          onPress={() => onSelectPlayer(p.id)}
-        />
-      ))}
-    </View>
+    <View style={styles.container}>
 
-    {/* --- Middle column: top row, center (pot + community), bottom row --- */}
+
+      <View style={styles.oval} />
+
+
     <View
-      style={{
-        flex: 1,
-        flexDirection: "column",
-        justifyContent: "space-between",
-        alignItems: "center",
-      }}
+      style={styles.content}
     >
-      {/* Top row */}
+      {/* --- Left column: left players top-to-bottom --- */}
       <View
         style={{
-          flexDirection: "row",
+          flexDirection: "column",
           justifyContent: "center",
-          width: "100%",
-          paddingHorizontal: 10,
         }}
       >
-        {seatingMap.top.map((p) => (
-          <View key={p.id} style={{ flex: 1, alignItems: "center" }}>
-            <PlayerDisplay
-              player={p}
-              onPress={() => onSelectPlayer(p.id)}
-            />
-          </View>
+        {seatingMap.left.map((p) => (
+          <PlayerDisplay
+            key={p.id}
+            player={p}
+            onPress={() => onSelectPlayer(p.id)}
+          />
         ))}
       </View>
 
-      {/* Center: pot & community cards */}
-      <View style={{ 
-        alignItems: "center",
-        minHeight: 154, 
-      }}>
-        <Text style={{ fontSize: 20, fontWeight: "bold" }}>Pot: {pot}</Text>
-        <Text>Live Bet: {toCall}</Text>
-        <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>
-          {communityCards.map((c) => (
-            <Card key={c} code={c} width={70} height={100} />
+      {/* --- Middle column: top row, center (pot + community), bottom row --- */}
+      <View
+        style={{
+          flex: 1,
+          flexDirection: "column",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        {/* Top row */}
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "center",
+            width: "100%",
+            paddingHorizontal: 10,
+          }}
+        >
+          {seatingMap.top.map((p) => (
+            <View key={p.id} style={{ flex: 1, alignItems: "center" }}>
+              <PlayerDisplay
+                player={p}
+                onPress={() => onSelectPlayer(p.id)}
+              />
+            </View>
+          ))}
+        </View>
+
+        {/* Center: pot & community cards */}
+        <View style={{ 
+          alignItems: "center",
+          minHeight: 154, 
+        }}>
+          <Text style={{ fontSize: 20, fontWeight: "bold" }}>Pot: {pot}</Text>
+          <Text>Live Bet: {toCall}</Text>
+          <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>
+            {communityCards.map((c) => (
+              <Card key={c} code={c} width={70} height={100} />
+            ))}
+          </View>
+        </View>
+
+        {/* Bottom row */}
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "center",
+            width: "100%",
+            paddingHorizontal: 10,
+          }}
+        >
+          {seatingMap.bottom.map((p) => (
+            <View key={p.id} style={{ flex: 1, alignItems: "center" }}>
+              <PlayerDisplay
+                player={p}
+                onPress={() => onSelectPlayer(p.id)}
+              />
+            </View>
           ))}
         </View>
       </View>
 
-      {/* Bottom row */}
+      {/* --- Right column: right players top-to-bottom --- */}
       <View
         style={{
-          flexDirection: "row",
+          flexDirection: "column",
           justifyContent: "center",
-          width: "100%",
-          paddingHorizontal: 10,
         }}
       >
-        {seatingMap.bottom.map((p) => (
-          <View key={p.id} style={{ flex: 1, alignItems: "center" }}>
-            <PlayerDisplay
-              player={p}
-              onPress={() => onSelectPlayer(p.id)}
-            />
-          </View>
+        {seatingMap.right.map((p) => (
+          <PlayerDisplay
+            key={p.id}
+            player={p}
+            onPress={() => onSelectPlayer(p.id)}
+          />
         ))}
       </View>
     </View>
-
-    {/* --- Right column: right players top-to-bottom --- */}
-    <View
-      style={{
-        flexDirection: "column",
-        justifyContent: "center",
-      }}
-    >
-      {seatingMap.right.map((p) => (
-        <PlayerDisplay
-          key={p.id}
-          player={p}
-          onPress={() => onSelectPlayer(p.id)}
-        />
-      ))}
-    </View>
   </View>
+
 );
 };
 
 export default SpectatorTable;
 
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    width: "100%",
+    height: "100%",
+    backgroundColor: "#267032",
+    padding: 20,
+    flexDirection: "row", // outermost row
+    justifyContent: "space-between",
+    alignItems: "stretch",
+  },
+
+  oval: {
+    position: "absolute",
+    top: "20%",
+    left: "10%",
+    width: "80%",
+    height: "60%",
+    borderWidth: 6,
+    borderColor: "#D8E0D8",
+    borderRadius: 9999,
+    zIndex: -1,          // works *only* inside same parent
+  },
+
+  content: {
+    flexDirection: "row", // outermost row
+    justifyContent: "space-between",
+    alignItems: "stretch", flex: 1,
+    zIndex: 1,
+  },
+});

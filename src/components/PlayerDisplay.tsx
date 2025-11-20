@@ -25,21 +25,31 @@ const PlayerDisplay = ({
       style={{
         alignItems: "center",
         padding: 6,
+        gap: 4,
         opacity: grey ? 0.4 : 1,
         cursor: "pointer",
+    backgroundColor: "#a0949377",
       }}
       onPress={onPress}
     >
-      <Logo size={50} />
-
-      <Text style={{ fontWeight: "bold" }}>{player.name}</Text>
-      <Text>{player.chips} chips</Text>
-
-      <View style={{ flexDirection: "row", gap: 4, marginTop: 4 }}>
-        {(player?.holeCards && player.holeCards.map( (code : CardCode, idx) => 
-          (<Card key={idx} code={code} {...CARD_SIZE.SMALL} />)
-        ))}
+      <View style={{ flexDirection: "row", gap: 4, }}>
+        
+      <View style={{ alignSelf: "flex-start" }}>
+        <Logo size={50}/>
       </View>
+
+        <View style={{ flexDirection: "column", alignItems: "center", justifyContent: "center",}}>
+          <Text style={{ fontWeight: "bold" }}>{player.name}</Text>
+          <Text>{player.chips} chips</Text>
+
+          <View style={{ flexDirection: "row", gap: 4, marginTop: 4 }}>
+            {(player?.holeCards && player.holeCards.map((code: CardCode, idx) =>
+              (<Card key={idx} code={code} {...CARD_SIZE.SMALL} />)
+            ))}
+          </View>
+        </View>
+      </View>
+
 
 
     </Pressable>
@@ -49,14 +59,14 @@ const PlayerDisplay = ({
 export default PlayerDisplay;
 
 
-      // <View style={{ flexDirection: "row", marginTop: 4, gap: 4 }}>
-      //   {player.isDealer && (
-      //     <Text style={{ backgroundColor: "gold", padding: 2 }}>D</Text>
-      //   )}
-      //   {player.isSmallBlind && (
-      //     <Text style={{ backgroundColor: "lightblue", padding: 2 }}>SB</Text>
-      //   )}
-      //   {player.isBigBlind && (
-      //     <Text style={{ backgroundColor: "lightgreen", padding: 2 }}>BB</Text>
-      //   )}
-      // </View>
+// <View style={{ flexDirection: "row", marginTop: 4, gap: 4 }}>
+//   {player.isDealer && (
+//     <Text style={{ backgroundColor: "gold", padding: 2 }}>D</Text>
+//   )}
+//   {player.isSmallBlind && (
+//     <Text style={{ backgroundColor: "lightblue", padding: 2 }}>SB</Text>
+//   )}
+//   {player.isBigBlind && (
+//     <Text style={{ backgroundColor: "lightgreen", padding: 2 }}>BB</Text>
+//   )}
+// </View>

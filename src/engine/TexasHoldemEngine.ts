@@ -3,8 +3,8 @@ import { CardCode, generateDeck, shuffle, BACK } from "../engine/cards"; // adju
 
 
 export const ENGINE_STATES = [
-   "deal",
-   "preflop",
+   "Blinds & Ante",
+   "Pre-Flop Bet",
    "flop",
    "turn",
    "river",
@@ -44,7 +44,7 @@ export class TexasHoldemEngine {
   private players: EnginePlayer[] = [];
   private communityCards: CardCode[] = [];
   private deck: CardCode[] = [];
-  private state: EngineState = "deal";
+  private state: EngineState = "Blinds & Ante";
 
   private dealerIndex = 0;
   private pot = 0;
@@ -82,10 +82,10 @@ console.log("to this.players ", this.players);
    */
   step(): boolean {
     switch (this.state) {
-      case "deal":
+      case "Blinds & Ante":
         return this.doDeal();
 
-      case "preflop":
+      case "Pre-Flop Bet":
         return this.doPreflop();
 
       case "flop":
@@ -141,7 +141,7 @@ console.log("this.players ", this.players);
       p.holeCards = null;
     }
 
-    this.state = "deal";
+    this.state = "Blinds & Ante";
   }
 
   private doDeal(): boolean {
@@ -154,17 +154,11 @@ console.log("this.players ", this.players);
       index += 2;
     }
 
-    this.state = "preflop";
+    this.state = "Pre-Flop Bet";
     return true;
   }
 
   private doPreflop(): boolean {
-    // betting phase placeholder (no betting engine implemented)
-    this.state = "flop";
-    return true;
-  }
-
-  private doFlop(): boolean {
     // burn one, then 3 community cards
     const offset = this.players.length * 2 + 1; // after hole cards + burn
     this.communityCards = [
@@ -172,13 +166,20 @@ console.log("this.players ", this.players);
       this.deck[offset + 1]!,
       this.deck[offset + 2]!,
     ];
+    this.state = "flop";
+    return true;
+  }
+
+  private doFlop(): boolean {
+    const offset = this.players.length * 2 + 4; // after flop + burn
+    this.communityCards.push(this.deck[offset]!);
 
     this.state = "turn";
     return true;
   }
 
   private doTurn(): boolean {
-    const offset = this.players.length * 2 + 4; // after flop + burn
+    const offset = this.players.length * 2 + 5; // after turn + burn
     this.communityCards.push(this.deck[offset]!);
 
     this.state = "river";
@@ -186,8 +187,6 @@ console.log("this.players ", this.players);
   }
 
   private doRiver(): boolean {
-    const offset = this.players.length * 2 + 5; // after turn + burn
-    this.communityCards.push(this.deck[offset]!);
 
     this.state = "showdown";
     return true;

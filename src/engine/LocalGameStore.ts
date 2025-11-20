@@ -68,8 +68,30 @@ export class LocalGameStore {
   }
 
   getPublicState(): EnginePublicState {
-    return this.engine.getPublicState();
+    const engineState = this.engine.getPublicState();
+
+    if (engineState.state !== "reveal") {
+      const publicPlayers: EnginePlayer[] = engineState.players.map(p => ({
+        ...p,
+        holeCards: (engineState.state === "Blinds & Ante" || p.folded) ? null : [BACK, BACK],
+      }));
+      return {
+        ...engineState,
+        players: publicPlayers
+      }
+    } else{
+      const publicPlayers: EnginePlayer[] = engineState.players.map(p => ({
+        ...p,
+        holeCards: (p.folded) ? null : p.holeCards,
+      }));
+      return {
+        ...engineState,
+        players: publicPlayers
+      }      
+    }
   }
+
+
   getPlayers(): EnginePlayer[] {
     return this.getPublicState().players;
   }
@@ -138,13 +160,13 @@ export class LocalGameStore {
       e.seat = p.seat;
       e.committed = p.committed;
       e.folded = p.folded;
-      e.holeCards = p.holeCards;
-  });
+      //e.holeCards = p.holeCards;
+    });
 
-    if(current.length < this.playerCount){
-      for (let i = current.length; i< this.playerCount; i++){
+    if (current.length < this.playerCount) {
+      for (let i = current.length; i < this.playerCount; i++) {
         // new players only play at the start of the round
-        enginePlayers[i].folded = true;
+        enginePlayers[i].folded = this.getEngineState() !== "Blinds & Ante";
       }
     }
 
