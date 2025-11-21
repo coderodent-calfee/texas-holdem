@@ -11,6 +11,9 @@ import {
   EnginePublicState,
   TexasHoldemEngine
 } from "../engine/TexasHoldemEngine";
+import Chip from "../components/Chip";
+import ChipSVG from "../components/ChipSVG";
+import VerticalProgressBar from "../components/Thermometer";
 
 interface SpectatorTableProps {
   store: GameStore;
@@ -18,7 +21,7 @@ interface SpectatorTableProps {
 }
 
 const SpectatorTable: React.FC<SpectatorTableProps> = ({ store, onSelectPlayer }) => {
-  const {   state,
+  const { state,
     players,
     communityCards,
     dealer,
@@ -82,113 +85,121 @@ const SpectatorTable: React.FC<SpectatorTableProps> = ({ store, onSelectPlayer }
   seatingMap.bottom = seatingMap.bottom.reverse();
   seatingMap.left = seatingMap.left.reverse();
   console.log("communityCards =", communityCards);
-return (
+  return (
     <View style={styles.container}>
 
 
       <View style={styles.oval} />
 
 
-    <View
-      style={styles.content}
-    >
-      {/* --- Left column: left players top-to-bottom --- */}
       <View
-        style={{
-          flexDirection: "column",
-          justifyContent: "center",
-        }}
+        style={styles.content}
       >
-        {seatingMap.left.map((p) => (
-          <PlayerDisplay
-            key={p.id}
-            player={p}
-            onPress={() => onSelectPlayer(p.id)}
-          />
-        ))}
-      </View>
-
-      {/* --- Middle column: top row, center (pot + community), bottom row --- */}
-      <View
-        style={{
-          flex: 1,
-          flexDirection: "column",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        {/* Top row */}
+        {/* --- Left column: left players top-to-bottom --- */}
         <View
           style={{
-            flexDirection: "row",
+            flexDirection: "column",
             justifyContent: "center",
-            width: "100%",
-            paddingHorizontal: 10,
           }}
         >
-          {seatingMap.top.map((p) => (
-            <View key={p.id} style={{ flex: 1, alignItems: "center" }}>
-              <PlayerDisplay
-                player={p}
-                onPress={() => onSelectPlayer(p.id)}
-              />
-            </View>
+          {seatingMap.left.map((p) => (
+            <PlayerDisplay
+              key={p.id}
+              player={p}
+              onPress={() => onSelectPlayer(p.id)}
+            />
           ))}
         </View>
 
-        {/* Center: pot & community cards */}
-        <View style={{ 
-          alignItems: "center",
-          minHeight: 154, 
-        }}>
-          <Text style={{ fontSize: 20, fontWeight: "bold" }}>Pot: {pot}</Text>
-          <Text>Live Bet: {toCall}</Text>
-          <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>
-            {communityCards.map((c) => (
-              <Card key={c} code={c} width={70} height={100} />
+        {/* --- Middle column: top row, center (pot + community), bottom row --- */}
+        <View
+          style={{
+            flex: 1,
+            flexDirection: "column",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          {/* Top row */}
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "center",
+              width: "100%",
+              paddingHorizontal: 10,
+            }}
+          >
+            {seatingMap.top.map((p) => (
+              <View key={p.id} style={{ flex: 1, alignItems: "center" }}>
+                <PlayerDisplay
+                  player={p}
+                  onPress={() => onSelectPlayer(p.id)}
+                />
+              </View>
+            ))}
+          </View>
+
+          {/* Center: pot & community cards */}
+          <View style={{
+            alignItems: "center",
+            minHeight: 154,
+          }}>
+            <Text style={{ fontSize: 20, fontWeight: "bold" }}>Pot: {pot}</Text>
+            <Text>Live Bet: {toCall}</Text>
+            <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>
+              {communityCards.map((c) => (
+                <Card key={c} code={c} width={70} height={100} />
+              ))}
+            </View>
+            {/* <Chip width={60} height={60} /> */}
+      {/* <VerticalProgressBar
+        value={200}
+        maxValue={500}
+        barColor="#00ade9" // A nice blue color
+        containerHeight={200} // Total height of the thermometer
+        containerWidth={30} // Width of the thermometer
+      /> */}
+          </View>
+
+          {/* Bottom row */}
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "center",
+              width: "100%",
+              paddingHorizontal: 10,
+            }}
+          >
+            {seatingMap.bottom.map((p) => (
+              <View key={p.id} style={{ flex: 1, alignItems: "center" }}>
+                <PlayerDisplay
+                  player={p}
+                  onPress={() => onSelectPlayer(p.id)}
+                />
+              </View>
             ))}
           </View>
         </View>
 
-        {/* Bottom row */}
+        {/* --- Right column: right players top-to-bottom --- */}
         <View
           style={{
-            flexDirection: "row",
+            flexDirection: "column",
             justifyContent: "center",
-            width: "100%",
-            paddingHorizontal: 10,
           }}
         >
-          {seatingMap.bottom.map((p) => (
-            <View key={p.id} style={{ flex: 1, alignItems: "center" }}>
-              <PlayerDisplay
-                player={p}
-                onPress={() => onSelectPlayer(p.id)}
-              />
-            </View>
+          {seatingMap.right.map((p) => (
+            <PlayerDisplay
+              key={p.id}
+              player={p}
+              onPress={() => onSelectPlayer(p.id)}
+            />
           ))}
         </View>
       </View>
-
-      {/* --- Right column: right players top-to-bottom --- */}
-      <View
-        style={{
-          flexDirection: "column",
-          justifyContent: "center",
-        }}
-      >
-        {seatingMap.right.map((p) => (
-          <PlayerDisplay
-            key={p.id}
-            player={p}
-            onPress={() => onSelectPlayer(p.id)}
-          />
-        ))}
-      </View>
     </View>
-  </View>
 
-);
+  );
 };
 
 export default SpectatorTable;
@@ -223,4 +234,26 @@ const styles = StyleSheet.create({
     alignItems: "stretch", flex: 1,
     zIndex: 1,
   },
+
+  chipContainer: {
+    flexDirection: 'row',       // stacks horizontally
+    alignItems: 'flex-end',     // bottom-align all stacks
+    justifyContent: 'center',   // center horizontally
+    paddingHorizontal: 10,
+    // remove fixed height: container grows automatically with tallest stack
+  },
+
+
 });
+
+/*
+
+41 pixels high for 120 chips  at size 20
+
+ aspect 0.45 chipHeight 9 count 120 stackSpacing 3 totalStackHeight 366
+
+ individual chip height should be 0.341
+
+one chip at 200 is 50 pixels
+
+*/

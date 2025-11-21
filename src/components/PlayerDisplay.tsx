@@ -9,6 +9,7 @@ import {
   EnginePublicState,
   TexasHoldemEngine
 } from "../engine/TexasHoldemEngine";
+import ChipSVG from "./ChipSVG";
 
 
 const PlayerDisplay = ({
@@ -41,12 +42,17 @@ const PlayerDisplay = ({
         <View style={{ flexDirection: "column", alignItems: "center", justifyContent: "center",}}>
           <Text style={{ fontWeight: "bold" }}>{player.name}</Text>
           <Text>{player.chips} chips</Text>
-
+          <View style={{ flexDirection: "row", alignItems:"flex-end"}}>
+            {/* <ChipSVG size={5} color="#a17c13ff" count={14} />
+            <ChipSVG size={5} color="#a0a0a0ff" count={40} />
+            <ChipSVG size={5} color="#515180ff" count={10} /> */}
+          </View>      
           <View style={{ flexDirection: "row", gap: 4, marginTop: 4 }}>
             {(player?.holeCards && player.holeCards.map((code: CardCode, idx) =>
               (<Card key={idx} code={code} {...CARD_SIZE.SMALL} />)
             ))}
           </View>
+    
         </View>
       </View>
 
