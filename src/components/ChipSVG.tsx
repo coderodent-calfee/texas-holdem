@@ -2,6 +2,10 @@
 import React from "react";
 
 const CHIP_SIDE = 16;   // height of <rect> = true visual thickness
+const CHIP_OVAL_H = 18;
+const CHIP_OVAL_Y = 26;
+const CHIP_OVAL_W = 80;
+const CHIP_STACK_GAP = 20;
 
 interface ChipSVGProps {
     size?: number;
@@ -31,16 +35,13 @@ export default function ChipSVG({
 
     const viewBoxW = 200;
     const viewBoxH = 90;
-    const chipHeight = Math.round(size * 0.25);
-    const stackSpacing = spacing ?? Math.round(chipHeight / 5);
+    
+;
     const tallest = Math.max(...stacks.map(s => s.chipCount));
-    const totalStackHeight =
-        chipHeight + stackSpacing * (tallest - 1);
+    const totalStackHeight = CHIP_OVAL_H + (CHIP_SIDE * (tallest+1));
     const uid = React.useId();
 
-    console.log(`ChipSVG:   size ${size} chipHeight ${chipHeight} count ${count} stackSpacing ${stackSpacing} totalStackHeight ${totalStackHeight}`);
-
-
+    console.log(`ChipSVG:   size ${size} count ${tallest}  totalStackHeight ${totalStackHeight}`);
 
 
     return (
@@ -83,8 +84,8 @@ export default function ChipSVG({
                             </linearGradient>
                             {/* slight top highlight done as a transparent white */}
                             <linearGradient id={`topHighlight-${uid}-${stackIndex}`} x1="0" x2="0" y1="0" y2="1">
-                                <stop offset="0" stopColor="rgba(255,255,255,0.70)" />
-                                <stop offset="0.25" stopColor="rgba(255,255,255,0.50)" />
+                                <stop offset="0" stopColor="rgba(255,255,255,0.80)" />
+                                <stop offset="0.25" stopColor="rgba(255,255,255,0.55)" />
                                 <stop offset="0.6" stopColor="rgba(255,255,255,0)" />
                                 <stop offset="1" stopColor="rgba(255,255,255,0)" />
                             </linearGradient>
@@ -97,31 +98,31 @@ export default function ChipSVG({
                             <g id={`chip-${uid}-${stackIndex}`}>
                                 {/* side band (the cylindrical side) - represented as a rect:
                                  draws over the _top_ of the _bottom ellipse_ */}
-                                <rect x={stackX + 20} y="26" width="160" height={`${CHIP_SIDE}`}
+                                <rect x={stackX + CHIP_STACK_GAP} y={`${CHIP_OVAL_Y}`} width={`${CHIP_OVAL_W*2}`} height={`${CHIP_SIDE}`}
                                     fill={`url(#bandGrad-${uid}-${stackIndex})`}
                                     stroke={stroke} strokeWidth="1"
                                 />
                                 {/* bottom shadow ellipse (gives the 'thickness' seen from angle) */}
-                                <ellipse cx={stackX + 100} cy="42" rx="80" ry={`${CHIP_SIDE}`}
+                                <ellipse cx={stackX + CHIP_OVAL_W + CHIP_STACK_GAP} cy={`${CHIP_OVAL_Y + CHIP_SIDE}`} rx={`${CHIP_OVAL_W}`} ry={`${CHIP_OVAL_H}`}
                                     fill={`url(#bandGrad-${uid}-${stackIndex})`}
                                     stroke={stroke}
                                     strokeWidth="1"
                                     clipPath={`url(#bottomClip-${uid}-${stackIndex})`}
                                 />
                                 {/* top ellipse (the visible 'top' face) */}
-                                <ellipse cx={stackX + 100} cy="26" rx="80" ry="18"
+                                <ellipse cx={stackX + CHIP_OVAL_W + CHIP_STACK_GAP} cy={`${CHIP_OVAL_Y}`} rx={`${CHIP_OVAL_W}`} ry={`${CHIP_OVAL_H}`}
                                     fill={stack.color}
                                     stroke={stroke}
                                     strokeWidth="1"
                                 />
                                 {/* slight top highlight done as a transparent white */}
-                                <ellipse cx={stackX + 100} cy="25" rx="73" ry="14"
+                                <ellipse cx={stackX + CHIP_OVAL_W + CHIP_STACK_GAP} cy="25" rx="73" ry="14"
                                     fill={`url(#topHighlight-${uid}-${stackIndex})`}
                                 />
                                 
                                 {/* inner ring for 'carved chip appearance --
                                 bottom of this ellipse blends with the chip */}
-                                <ellipse cx={stackX + 100} cy="26" rx="70" ry="14"
+                                <ellipse cx={stackX + CHIP_OVAL_W + CHIP_STACK_GAP} cy="26" rx="70" ry="14"
                                     fill="none"
                                     stroke={stack.color}
                                     strokeWidth="2"
@@ -129,11 +130,8 @@ export default function ChipSVG({
                             </g>
                         </defs>
 
-                        {Array.from({ length: stack.chipCount }).map((_, i) => {
-                            const y =
-                                totalStackHeight -
-                                chipHeight -
-                                i * stackSpacing;
+                        {Array.from({ length: stack.chipCount }).reverse().map((_, i) => {
+                            const y = ( CHIP_OVAL_H + (CHIP_SIDE * (- (i+1) )));
                             return (
                                 <use
                                     key={i}
