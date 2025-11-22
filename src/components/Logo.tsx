@@ -7,7 +7,7 @@ interface LogoProps {
 }
 export default function Logo({ size = 100 }: LogoProps) {
   return (
-    <View style={[styles.container, { width: size, height: size }]}>
+    <View testID="logo" style={[styles.container, { width: size, height: size }]}>
       <Image
         source={require("../../assets/images/rwc.png")}
         style={styles.image}
@@ -21,7 +21,6 @@ const styles = StyleSheet.create({
   container: {
     alignItems: "center",
     justifyContent: "center",
-    marginVertical: 20,
   },
   image: {
     width: "100%",  // fill the container horizontally

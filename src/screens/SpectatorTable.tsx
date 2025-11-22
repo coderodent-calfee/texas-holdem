@@ -126,7 +126,7 @@ const SpectatorTable: React.FC<SpectatorTableProps> = ({ store, onSelectPlayer }
               flexDirection: "row",
               justifyContent: "center",
               width: "100%",
-              paddingHorizontal: 10,
+              gap : 2,
             }}
           >
             {seatingMap.top.map((p) => (
@@ -140,27 +140,37 @@ const SpectatorTable: React.FC<SpectatorTableProps> = ({ store, onSelectPlayer }
           </View>
 
           {/* Center: pot & community cards */}
-          <View style={{
-            alignItems: "center",
-            minHeight: 154,
-          }}>
-            <Text style={{ fontSize: 20, fontWeight: "bold" }}>Pot: {pot}</Text>
-            <Text>Live Bet: {toCall}</Text>
-            <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>
-              {communityCards.map((c) => (
-                <Card key={c} code={c} width={70} height={100} />
-              ))}
-            </View>
-            {/* <Chip width={60} height={60} /> */}
-      {/* <VerticalProgressBar
-        value={200}
-        maxValue={500}
-        barColor="#00ade9" // A nice blue color
-        containerHeight={200} // Total height of the thermometer
-        containerWidth={30} // Width of the thermometer
-      /> */}
-          </View>
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "center",
+              width: "100%",
+              paddingHorizontal: 10,
+            }}
+          >
 
+            <View style={{
+              alignItems: "center",
+              minHeight: 154,
+            }}>
+              <Text style={{ fontSize: 20, fontWeight: "bold" }}>Pot: {pot}</Text>
+              <Text>Live Bet: {toCall}</Text>
+              <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>
+                {communityCards.map((c) => (
+                  <Card key={c} code={c} width={70} height={100} />
+                ))}
+              </View>
+        {/* <ChipSVG size={10} ></ChipSVG> */}
+            </View>
+              {/* <Chip width={60} height={60} /> */}
+              {/* <VerticalProgressBar
+                value={200}
+                maxValue={500}
+                barColor="#00ade9" // A nice blue color
+                containerHeight={200} // Total height of the thermometer
+                containerWidth={30} // Width of the thermometer
+              /> */}
+          </View>
           {/* Bottom row */}
           <View
             style={{
@@ -186,6 +196,7 @@ const SpectatorTable: React.FC<SpectatorTableProps> = ({ store, onSelectPlayer }
           style={{
             flexDirection: "column",
             justifyContent: "center",
+            gap:10,
           }}
         >
           {seatingMap.right.map((p) => (

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
 import SpectatorTableWrapper from "./screens/SpectatorTableWrapper";
 import ChipSVG from "./components/ChipSVG";
+import { View } from "react-native";
 
 const App = () => {
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
@@ -19,9 +20,10 @@ console.log(selectedPlayer);
   }
 
   return (
-    <SpectatorTableWrapper
-      onSelectPlayer={(id) => setSelectedPlayer(id)}
-    />
+<View style={{ flex: 1 }}>
+  <SpectatorTableWrapper onSelectPlayer={(id) => setSelectedPlayer(id)} />
+</View>
+
   );
 };
 

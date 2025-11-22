@@ -1,11 +1,16 @@
 // ChipSVG.tsx
 import React from "react";
 
-const CHIP_SIDE = 16;   // height of <rect> = true visual thickness
+const CHIP_SIDE = 16;
 const CHIP_OVAL_H = 18;
 const CHIP_OVAL_Y = 26;
+const CHIP_TOTAL = CHIP_OVAL_H + CHIP_SIDE + CHIP_OVAL_H;
+const CHIP_TOP_OFFSET = CHIP_OVAL_Y - CHIP_OVAL_H;
+
+
 const CHIP_OVAL_W = 80;
-const CHIP_STACK_GAP = 20;
+const CHIP_W = CHIP_OVAL_W * 2;
+const CHIP_STACK_GAP = 0;
 
 interface ChipSVGProps {
     size?: number;
@@ -15,7 +20,7 @@ interface ChipSVGProps {
     ariaLabel?: string;
     count?: number;      // number of chips in stack
     spacing?: number;    // optional user override
-    stacks?: { chipCount: number; color: string, rim? : string }[];
+    stacks?: { chipCount: number; color: string, rim?: string }[];
 }
 
 export default function ChipSVG({
@@ -29,33 +34,34 @@ export default function ChipSVG({
     stacks = [
         { chipCount: 1, color: "#d4af37" }, // gold
         { chipCount: 15, color: "#c0c0c0" }, // silver
-        { chipCount: 25, color: "#87cefa" }, // light blue
+        { chipCount: 25, color: "#812c05ff" },
     ],
 }: ChipSVGProps) {
-
-    const viewBoxW = 200;
-    const viewBoxH = 90;
-    
-;
-    const tallest = Math.max(...stacks.map(s => s.chipCount));
-    const totalStackHeight = CHIP_OVAL_H + (CHIP_SIDE * (tallest+1));
     const uid = React.useId();
 
-    console.log(`ChipSVG:   size ${size} count ${tallest}  totalStackHeight ${totalStackHeight}`);
+    const numStacks = stacks?.length ?? 1;
+    const viewBoxW = numStacks * (CHIP_OVAL_W * 2) + (numStacks - 1) * CHIP_STACK_GAP;
 
+    const tallest = Math.max(...stacks.map(s => s.chipCount));
+    const totalStackHeight = CHIP_TOTAL + (tallest - 1) * CHIP_SIDE;
+    const viewBoxH = totalStackHeight;
+    const pixelWidth = size;
+    const pixelHeight = pixelWidth * (viewBoxH / viewBoxW);
 
     return (
-
         <svg
-            width={size * stacks.length}
-            height={totalStackHeight}
-            viewBox={`0 0 ${viewBoxW * stacks.length} ${viewBoxH}`}
+            width={pixelWidth}
+            height={pixelHeight}
+            viewBox={`0 0 ${viewBoxW} ${viewBoxH}`}
+
+
             role="img"
             aria-label={ariaLabel}
             xmlns="http://www.w3.org/2000/svg"
         >
             {stacks.map((stack, stackIndex) => {
-                const stackX = stackIndex * viewBoxW;
+
+                const stackX = stackIndex * CHIP_W;
 
                 // Calculate rim color here (copied from your original logic)
                 const hex = (c: string) => c.replace("#", "");
@@ -98,7 +104,7 @@ export default function ChipSVG({
                             <g id={`chip-${uid}-${stackIndex}`}>
                                 {/* side band (the cylindrical side) - represented as a rect:
                                  draws over the _top_ of the _bottom ellipse_ */}
-                                <rect x={stackX + CHIP_STACK_GAP} y={`${CHIP_OVAL_Y}`} width={`${CHIP_OVAL_W*2}`} height={`${CHIP_SIDE}`}
+                                <rect x={stackX + CHIP_STACK_GAP} y={`${CHIP_OVAL_Y}`} width={`${CHIP_W}`} height={`${CHIP_SIDE}`}
                                     fill={`url(#bandGrad-${uid}-${stackIndex})`}
                                     stroke={stroke} strokeWidth="1"
                                 />
@@ -119,7 +125,7 @@ export default function ChipSVG({
                                 <ellipse cx={stackX + CHIP_OVAL_W + CHIP_STACK_GAP} cy="25" rx="73" ry="14"
                                     fill={`url(#topHighlight-${uid}-${stackIndex})`}
                                 />
-                                
+
                                 {/* inner ring for 'carved chip appearance --
                                 bottom of this ellipse blends with the chip */}
                                 <ellipse cx={stackX + CHIP_OVAL_W + CHIP_STACK_GAP} cy="26" rx="70" ry="14"
@@ -129,9 +135,9 @@ export default function ChipSVG({
                                 />
                             </g>
                         </defs>
-
-                        {Array.from({ length: stack.chipCount }).reverse().map((_, i) => {
-                            const y = ( CHIP_OVAL_H + (CHIP_SIDE * (- (i+1) )));
+                        {Array.from({ length: stack.chipCount }).map((_, i) => {
+                            const bottomY = viewBoxH - (CHIP_TOTAL - CHIP_TOP_OFFSET) - CHIP_SIDE;
+                            const y = (bottomY - i * CHIP_SIDE);
                             return (
                                 <use
                                     key={i}

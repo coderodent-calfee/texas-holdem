@@ -80,10 +80,10 @@ export default function SpectatorTableWrapper({ onSelectPlayer }: Props) {
       </View>
 
       {/* Spectator Table */}
-      <SpectatorTable
-        store={store}
-        onSelectPlayer={onSelectPlayer}
-      />
+      <View style={{ flex: 1 }}>
+        <SpectatorTable store={store} onSelectPlayer={onSelectPlayer} />
+      </View>
+
     </View>
   );
 }

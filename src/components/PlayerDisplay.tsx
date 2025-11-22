@@ -25,34 +25,32 @@ const PlayerDisplay = ({
     <Pressable
       style={{
         alignItems: "center",
-        padding: 6,
-        gap: 4,
         opacity: grey ? 0.4 : 1,
         cursor: "pointer",
-    backgroundColor: "#a0949377",
+        backgroundColor: "#a0949377",
+        borderRadius: 12, 
+paddingLeft: 10,
+paddingVertical: 4,
+paddingRight: 6,
       }}
       onPress={onPress}
     >
-      <View style={{ flexDirection: "row", gap: 4, }}>
-        
-      <View style={{ alignSelf: "flex-start" }}>
-        <Logo size={50}/>
-      </View>
+      <View style={{ flexDirection: "row" }}>
 
-        <View style={{ flexDirection: "column", alignItems: "center", justifyContent: "center",}}>
+        <View style={{ flexDirection: "column", alignItems: "center", gap: 2 }}>
+          <Logo size={50} />
+          <ChipSVG size={50} ></ChipSVG>
+        </View>
+
+        <View style={{ flexDirection: "column", alignItems: "center", justifyContent: "center", }}>
           <Text style={{ fontWeight: "bold" }}>{player.name}</Text>
           <Text>{player.chips} chips</Text>
-          <View style={{ flexDirection: "row", alignItems:"flex-end"}}>
-            {/* <ChipSVG size={5} color="#a17c13ff" count={14} />
-            <ChipSVG size={5} color="#a0a0a0ff" count={40} />
-            <ChipSVG size={5} color="#515180ff" count={10} /> */}
-          </View>      
-          <View style={{ flexDirection: "row", gap: 4, marginTop: 4 }}>
+          <View style={{ flexDirection: "row", gap: 4, marginTop: 4, paddingLeft: 4 }}>
             {(player?.holeCards && player.holeCards.map((code: CardCode, idx) =>
               (<Card key={idx} code={code} {...CARD_SIZE.SMALL} />)
             ))}
           </View>
-    
+
         </View>
       </View>
 
@@ -64,15 +62,3 @@ const PlayerDisplay = ({
 
 export default PlayerDisplay;
 
-
-// <View style={{ flexDirection: "row", marginTop: 4, gap: 4 }}>
-//   {player.isDealer && (
-//     <Text style={{ backgroundColor: "gold", padding: 2 }}>D</Text>
-//   )}
-//   {player.isSmallBlind && (
-//     <Text style={{ backgroundColor: "lightblue", padding: 2 }}>SB</Text>
-//   )}
-//   {player.isBigBlind && (
-//     <Text style={{ backgroundColor: "lightgreen", padding: 2 }}>BB</Text>
-//   )}
-// </View>
