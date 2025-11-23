@@ -1,15 +1,16 @@
 // src/engine/TexasHoldemEngine.ts
 import { CardCode, generateDeck, shuffle, BACK } from "../engine/cards"; // adjust path if your cards file is elsewhere
+import { scoreHand, HandScore, determineWinners } from "./handScorer"; // your scoring module
 
 
 export const ENGINE_STATES = [
-   "Blinds & Ante",
-   "Pre-Flop Bet",
-   "flop",
-   "turn",
-   "river",
-   "showdown",
-   "reveal"
+  "Blinds & Ante",
+  "Pre-Flop Bet",
+  "flop",
+  "turn",
+  "river",
+  "showdown",
+  "reveal"
 ] as const;
 
 
@@ -24,16 +25,21 @@ export interface EnginePlayer {
   committed: number;
   folded: boolean;
   holeCards: [CardCode, CardCode] | null;
+  isDealer?: boolean;
+  isBigBlind?: boolean;
+  isSmallBlind?: boolean;
 }
 
 export interface EnginePublicState {
   state: EngineState;
   players: EnginePlayer[];
   communityCards: CardCode[];
-  dealer: number;
+  dealerId: string;
   pot: number;
   minBet: number;
   toCall: number;
+  scores?: Record<string, HandScore>;
+  winners?: string[];
 }
 
 export class TexasHoldemEngine {
@@ -46,11 +52,13 @@ export class TexasHoldemEngine {
   private deck: CardCode[] = [];
   private state: EngineState = "Blinds & Ante";
 
-  private dealerIndex = 0;
+  private dealerId = "";
   private pot = 0;
 
   private minBet = 0;
   private toCall = 0;
+  private scores: Record<string, HandScore> = {};
+  private winners: string[] = [];
 
   // ---------------------------------------------------------------------------
   // PUBLIC API
@@ -58,10 +66,10 @@ export class TexasHoldemEngine {
 
   /** Called by the store to push the current list of players */
   setPlayers(players: EnginePlayer[]) {
-console.log("setting this.players ", this.players);
-    
+    console.log("setting this.players ", this.players);
+
     this.players = [...players];
-console.log("to this.players ", this.players);
+    console.log("to this.players ", this.players);
   }
 
   /** Begin a new hand with a random deck */
@@ -114,10 +122,12 @@ console.log("to this.players ", this.players);
       state: this.state,
       players: this.players,
       communityCards: this.communityCards,
-      dealer: this.dealerIndex,
+      dealerId: this.dealerId,
       pot: this.pot,
       minBet: this.minBet,
       toCall: this.toCall,
+      scores: this.state === "reveal" ? this.scores : undefined,
+      winners: this.state === "reveal" ? this.winners : undefined,
     };
   }
 
@@ -130,18 +140,21 @@ console.log("to this.players ", this.players);
     this.pot = 0;
     this.minBet = 0;
     this.toCall = 0;
-console.log("this.players ", this.players);
-  if (!Array.isArray(this.players)) {
-    console.warn("players is not an array, resetting to empty array", this.players);
-    this.players = [];
-  }
+    console.log("this.players ", this.players);
+    if (!Array.isArray(this.players)) {
+      console.warn("players is not an array, resetting to empty array", this.players);
+      this.players = [];
+    }
     for (const p of this.players) {
       p.committed = 0;
       p.folded = false;
       p.holeCards = null;
     }
-
+    if (this.players.length > 0) {
+      this.dealerId = this.players[0].id;
+    }
     this.state = "Blinds & Ante";
+    this.scores = {};
   }
 
   private doDeal(): boolean {
@@ -193,7 +206,23 @@ console.log("this.players ", this.players);
   }
 
   private doShowdown(): boolean {
-    // showdown resolution placeholder; move to reveal
+    // Only score active players who didn’t fold
+    this.scores = {};
+    for (const p of this.players) {
+      if (!p.folded && p.holeCards) {
+        this.scores[p.id] = scoreHand(p.holeCards, this.communityCards);
+      }
+      console.log(`Player:${p.name} has a ${this.scores[p.id].type} with ${this.scores[p.id].ranks}`);
+    }
+    this.winners = determineWinners(this.scores);
+    this.winners.forEach((id)=>{
+      const winner = this.players.find(p => p.id === id);
+      if(winner){
+        console.log(`Player:${winner.name} wins with a ${this.scores[winner.id].type} with ${this.scores[winner.id].ranks}`);
+      }
+      
+    });
+  
     this.state = "reveal";
     return false;
   }

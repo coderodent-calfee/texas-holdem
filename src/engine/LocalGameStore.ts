@@ -70,24 +70,37 @@ export class LocalGameStore {
   getPublicState(): EnginePublicState {
     const engineState = this.engine.getPublicState();
 
+    const players = engineState.players;
+    const dealerIndex = players.findIndex(p => p.id === engineState.dealerId);
+
+    // Compute small and big blind indices, wrapping around
+    const smallBlindIndex = dealerIndex >= 0 ? (dealerIndex + 1) % players.length : -1;
+    const bigBlindIndex = dealerIndex >= 0 ? (dealerIndex + 2) % players.length : -1;
+
+    const beforeDeal = engineState.state === "Blinds & Ante";
+
     if (engineState.state !== "reveal") {
-      const publicPlayers: EnginePlayer[] = engineState.players.map(p => ({
+      const publicPlayers: EnginePlayer[] = players.map((p, i) => ({
         ...p,
-        holeCards: (engineState.state === "Blinds & Ante" || p.folded) ? null : [BACK, BACK],
+        holeCards: (beforeDeal || p.folded) ? null : [BACK, BACK],
+        isDealer: beforeDeal && p.id === engineState.dealerId,
+        isSmallBlind: beforeDeal && i === smallBlindIndex,
+        isBigBlind: beforeDeal && i === bigBlindIndex,
+
       }));
       return {
         ...engineState,
         players: publicPlayers
       }
-    } else{
-      const publicPlayers: EnginePlayer[] = engineState.players.map(p => ({
+    } else {
+      const publicPlayers: EnginePlayer[] = players.map(p => ({
         ...p,
         holeCards: (p.folded) ? null : p.holeCards,
       }));
       return {
         ...engineState,
         players: publicPlayers
-      }      
+      }
     }
   }
 

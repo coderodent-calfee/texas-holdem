@@ -24,7 +24,7 @@ const SpectatorTable: React.FC<SpectatorTableProps> = ({ store, onSelectPlayer }
   const { state,
     players,
     communityCards,
-    dealer,
+    dealerId,
     pot,
     minBet,
     toCall,
@@ -78,7 +78,6 @@ const SpectatorTable: React.FC<SpectatorTableProps> = ({ store, onSelectPlayer }
       }
       index += 1;
     });
-
   }
 
   // Reverse the order for clockwise display from dealer left
@@ -126,7 +125,7 @@ const SpectatorTable: React.FC<SpectatorTableProps> = ({ store, onSelectPlayer }
               flexDirection: "row",
               justifyContent: "center",
               width: "100%",
-              gap : 2,
+              gap: 2,
             }}
           >
             {seatingMap.top.map((p) => (
@@ -159,11 +158,17 @@ const SpectatorTable: React.FC<SpectatorTableProps> = ({ store, onSelectPlayer }
                 {communityCards.map((c) => (
                   <Card key={c} code={c} width={70} height={100} />
                 ))}
+                <ChipSVG size={200}
+                  stacks={[
+                    { chipCount: 1, color: "#005637" }, // green $25 #0FA15B #4A6330 "#017945" #005637
+                    { chipCount: 15, color: "#016EB1" }, // blue $10 #283371 #016EB1
+                    { chipCount: 25, color: "#812c05ff" }, // red : $5
+                    { chipCount: 5, color: "#cacacaff", rim: "#000000" }, // white $1
+                  ]}
+                ></ChipSVG>
               </View>
-        {/* <ChipSVG size={10} ></ChipSVG> */}
             </View>
-              {/* <Chip width={60} height={60} /> */}
-              {/* <VerticalProgressBar
+            {/* <VerticalProgressBar
                 value={200}
                 maxValue={500}
                 barColor="#00ade9" // A nice blue color
@@ -196,10 +201,10 @@ const SpectatorTable: React.FC<SpectatorTableProps> = ({ store, onSelectPlayer }
           style={{
             flexDirection: "column",
             justifyContent: "center",
-            gap:10,
+            gap: 10,
           }}
         >
-          {seatingMap.right.map((p) => (
+          {seatingMap.right.map((p, i) => (
             <PlayerDisplay
               key={p.id}
               player={p}

@@ -10,6 +10,7 @@ import {
   TexasHoldemEngine
 } from "../engine/TexasHoldemEngine";
 import ChipSVG from "./ChipSVG";
+import DealerChip from "./DealerChip";
 
 
 const PlayerDisplay = ({
@@ -28,10 +29,10 @@ const PlayerDisplay = ({
         opacity: grey ? 0.4 : 1,
         cursor: "pointer",
         backgroundColor: "#a0949377",
-        borderRadius: 12, 
-paddingLeft: 10,
-paddingVertical: 4,
-paddingRight: 6,
+        borderRadius: 12,
+        paddingLeft: 10,
+        paddingVertical: 4,
+        paddingRight: 6,
       }}
       onPress={onPress}
     >
@@ -45,6 +46,9 @@ paddingRight: 6,
         <View style={{ flexDirection: "column", alignItems: "center", justifyContent: "center", }}>
           <Text style={{ fontWeight: "bold" }}>{player.name}</Text>
           <Text>{player.chips} chips</Text>
+          {player.isDealer && <DealerChip />}
+          {player.isBigBlind && <DealerChip color={"#EDDE02"} text="BIG\nBLIND"/>}
+          {player.isSmallBlind && <DealerChip color={"#1e40ccff"} text="SMALL\nBLIND"/>}
           <View style={{ flexDirection: "row", gap: 4, marginTop: 4, paddingLeft: 4 }}>
             {(player?.holeCards && player.holeCards.map((code: CardCode, idx) =>
               (<Card key={idx} code={code} {...CARD_SIZE.SMALL} />)
