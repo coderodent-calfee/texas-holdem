@@ -116,6 +116,34 @@ export class TexasHoldemEngine {
     return false;
   }
 
+  public nextDealer(): void {
+    const players = this.players;
+    const count = players.length;
+
+    if (count === 0) return;
+
+    // Find current dealer index (or start before 0 if unset)
+    const currentIndex = players.findIndex(p => p.id === this.dealerId);
+    const startIndex = currentIndex >= 0 ? currentIndex : -1;
+
+    let nextIndex = startIndex;
+
+    // Rotate forward looking for a player with chips > 0
+    for (let i = 1; i <= count; i++) {
+      const candidate = (startIndex + i) % count;
+      if (players[candidate].chips > 0) {
+        nextIndex = candidate;
+        break;
+      }
+    }
+
+    // If we found no eligible player, do nothing
+    if (nextIndex === startIndex) return;
+
+    // Assign new dealerId
+    this.dealerId = players[nextIndex].id;
+  }
+
   /** UI and store use this to render */
   getPublicState(): EnginePublicState {
     return {
@@ -215,14 +243,14 @@ export class TexasHoldemEngine {
       console.log(`Player:${p.name} has a ${this.scores[p.id].type} with ${this.scores[p.id].ranks}`);
     }
     this.winners = determineWinners(this.scores);
-    this.winners.forEach((id)=>{
+    this.winners.forEach((id) => {
       const winner = this.players.find(p => p.id === id);
-      if(winner){
+      if (winner) {
         console.log(`Player:${winner.name} wins with a ${this.scores[winner.id].type} with ${this.scores[winner.id].ranks}`);
       }
-      
+
     });
-  
+
     this.state = "reveal";
     return false;
   }

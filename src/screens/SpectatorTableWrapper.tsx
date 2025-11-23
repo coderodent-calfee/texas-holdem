@@ -20,9 +20,9 @@ export default function SpectatorTableWrapper({ onSelectPlayer }: Props) {
   const [, forceRender] = useState(0);
 
   // --- Dealer / next player (testing) ---
-  const [dealerIndex, setDealerIndex] = useState(0);
   const nextPlayer = () => {
-    setDealerIndex((dealerIndex + 1) % store.getPlayers().length);
+    store.advanceDealer();
+    forceRender(x => x + 1);
   };
   const snapshot = store.getPublicState();
   const currentState = store.getEngineState();

@@ -9,7 +9,8 @@ export interface GameStore {
 
   // Game progression
   step(): boolean;
-
+  advanceDealer(): void;
+  
   // Hand resets
   resetHand(): void;
   resetHandWithDeck(deck: CardCode[]): void;

@@ -119,6 +119,10 @@ export class LocalGameStore {
     return canContinue;
   }
 
+
+  advanceDealer(): void {
+    this.engine.nextDealer();
+  }
   // ---------------------------------------------------
   // Start a brand new hand with a fresh deck
   // ---------------------------------------------------
