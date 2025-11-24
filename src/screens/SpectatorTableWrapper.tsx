@@ -6,6 +6,7 @@ import { LocalGameStore } from "../engine/LocalGameStore";
 
 import EngineStateTester from "../components/EngineStateTester";
 import { BACK } from "../engine/cards";
+import PlayerTable from "./PlayerTable";
 
 interface Props {
   onSelectPlayer: (id: string) => void;
@@ -16,14 +17,55 @@ export default function SpectatorTableWrapper({ onSelectPlayer }: Props) {
   const store = useMemo(() => new LocalGameStore(), []);
   const [endOfRound, setEndOfRound] = useState(false);
 
-  // --- Force re-render for UI updates ---
+  // --- Debug UI state ---
+  const [mode, setMode] = useState<"spectator" | "player">("spectator");
+  const [playerIndex, setPlayerIndex] = useState(0);
+
+  // --- Re-render trigger ---
   const [, forceRender] = useState(0);
+  const refresh = () => forceRender(x => x + 1);
+
+  // --- Player selection logic ---
+  const players = store.getPlayers();
+  const currentPlayer = players[playerIndex];
+  const currentPlayerId = currentPlayer?.id ?? null;
 
   // --- Dealer / next player (testing) ---
-  const nextPlayer = () => {
+  const nextDealer = () => {
     store.advanceDealer();
     forceRender(x => x + 1);
   };
+
+  const nextPlayer = () => {
+    setPlayerIndex((playerIndex + 1) % players.length);
+    setMode("player");
+    refresh();
+  };
+
+  const handleNextPlayer = () => {
+    store.getEngineState() === "Blinds & Ante" ? nextDealer() : nextPlayer();
+  };
+
+  const handleSelectPlayer = (id: string) => {
+    console.log(">>> Player button pressed:", id);
+    const index = players.findIndex(p => p.id === id);
+
+    if (index !== -1) {
+      setPlayerIndex(index);
+      setMode("player");
+      refresh(); // force re-render so PlayerTable updates immediately
+    }
+  };
+
+  const isSpectator = () => {
+    return mode === "spectator";
+  }
+
+  const handleSpectator = () => {
+    console.log(">>> Spectator Mode button pressed");
+    setMode("spectator");
+  }
+
   const snapshot = store.getPublicState();
   const currentState = store.getEngineState();
   const advanceEngine = () => {
@@ -42,7 +84,6 @@ export default function SpectatorTableWrapper({ onSelectPlayer }: Props) {
     store.increasePlayerCount();
     forceRender(x => x + 1);
   };
-
 
   const decreasePlayerCount = () => {
     store.decreasePlayerCount();
@@ -72,16 +113,32 @@ export default function SpectatorTableWrapper({ onSelectPlayer }: Props) {
 
       {/* Engine State Tester */}
       <View style={{ flexDirection: "row", justifyContent: "space-evenly", marginBottom: 10 }}>
-        <Button title="Next Player" onPress={nextPlayer} />
+        <Button title={store.getEngineState() === "Blinds & Ante" ? "Next Dealer" : "Next Player"}
+          onPress={handleNextPlayer} />
+                <Text style={{ alignSelf: "center", marginHorizontal: 10 }}>
+          {`${mode} ${isSpectator()?"":currentPlayer.name}`}
+        </Text>
         <EngineStateTester
           engineState={store.getEngineState()}
           onAdvanceEngine={() => { advanceEngine() }}
         />
       </View>
-
+      {/* Debug: switch to spectator */}
+      <View style={{ alignItems: "center", marginBottom: 10 }}>
+        <Button
+          title="Spectator Mode"
+          onPress={handleSpectator}
+        />
+      </View>
       {/* Spectator Table */}
       <View style={{ flex: 1 }}>
-        <SpectatorTable store={store} onSelectPlayer={onSelectPlayer} />
+
+{mode === "spectator"? <SpectatorTable store={store} onSelectPlayer={handleSelectPlayer} /> :
+        <PlayerTable store={store} onSelectPlayer={handleSelectPlayer} playerId={currentPlayer.id} />
+
+}
+
+
       </View>
 
     </View>

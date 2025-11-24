@@ -1,4 +1,4 @@
-// src/screens/SpectatorTable.tsx
+// src/screens/PlayerTable.tsx
 import React, { useState } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import PlayerDisplay from "../components/PlayerDisplay";
@@ -15,12 +15,13 @@ import Chip from "../components/Chip";
 import ChipSVG from "../components/ChipSVG";
 import VerticalProgressBar from "../components/Thermometer";
 
-interface SpectatorTableProps {
+interface PlayerTableProps {
   store: GameStore;
   onSelectPlayer: (id: string) => void;
+  playerId: string;
 }
 
-const SpectatorTable: React.FC<SpectatorTableProps> = ({ store, onSelectPlayer }) => {
+const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, playerId }) => {
   const { state,
     players,
     communityCards,
@@ -31,6 +32,17 @@ const SpectatorTable: React.FC<SpectatorTableProps> = ({ store, onSelectPlayer }
   } = store.getPublicState();
 
   if (!players || players.length < 2) return null;
+  const player = players.find(p => p.id === playerId);
+  if (!player) {
+    return <Text>Player not found</Text>;
+  }
+  const isSelf = player.id === playerId;
+  if(isSelf){
+    const holeCards = store.getHoleCards(playerId);
+    if(holeCards){
+      player.holeCards = holeCards;
+    }
+  }
 
   const seatingMap: {
     top: EnginePlayer[];
@@ -103,7 +115,7 @@ const SpectatorTable: React.FC<SpectatorTableProps> = ({ store, onSelectPlayer }
         >
           {seatingMap.left.map((p) => (
             <PlayerDisplay
-              key={p.id}
+              key={p.id} playerId={playerId}
               player={p}
               onPress={() => onSelectPlayer(p.id)}
             />
@@ -133,6 +145,7 @@ const SpectatorTable: React.FC<SpectatorTableProps> = ({ store, onSelectPlayer }
                 <PlayerDisplay
                   player={p}
                   onPress={() => onSelectPlayer(p.id)}
+                   playerId={playerId}
                 />
               </View>
             ))}
@@ -152,29 +165,24 @@ const SpectatorTable: React.FC<SpectatorTableProps> = ({ store, onSelectPlayer }
               alignItems: "center",
               minHeight: 154,
             }}>
-              <Text style={{ fontSize: 20, fontWeight: "bold" }}>Spectator Table Pot: {pot}</Text>
-              <Text>Live Bet: {toCall}</Text>
-              <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>
-                {communityCards.map((c) => (
-                  <Card key={c} code={c} width={70} height={100} />
-                ))}
-                <ChipSVG size={150}
+<ChipSVG size={100}
                   stacks={[
                     { chipCount: 1, color: "#005637" }, // green $25 #0FA15B #4A6330 "#017945" #005637
                     { chipCount: 15, color: "#016EB1" }, // blue $10 #283371 #016EB1
                     { chipCount: 25, color: "#812c05ff" }, // red : $5
                     { chipCount: 5, color: "#cacacaff", rim: "#000000" }, // white $1
                   ]}
-                ></ChipSVG>
+                ></ChipSVG>              
+              <Text style={{ fontSize: 20, fontWeight: "bold" }}>Player Table Pot: {pot}</Text>
+              <Text>Live Bet: {toCall}</Text>
+              <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>
+                {communityCards.map((c) => (
+                  <Card key={c} code={c} width={70} height={100} />
+                ))}
+                
               </View>
             </View>
-            {/* <VerticalProgressBar
-                value={200}
-                maxValue={500}
-                barColor="#00ade9" // A nice blue color
-                containerHeight={200} // Total height of the thermometer
-                containerWidth={30} // Width of the thermometer
-              /> */}
+
           </View>
           {/* Bottom row */}
           <View
@@ -189,7 +197,8 @@ const SpectatorTable: React.FC<SpectatorTableProps> = ({ store, onSelectPlayer }
               <View key={p.id} style={{ flex: 1, alignItems: "center" }}>
                 <PlayerDisplay
                   player={p}
-                  onPress={() => onSelectPlayer(p.id)}
+                  onPress={() => onSelectPlayer(p.id) }
+                  playerId={playerId}  
                 />
               </View>
             ))}
@@ -206,7 +215,7 @@ const SpectatorTable: React.FC<SpectatorTableProps> = ({ store, onSelectPlayer }
         >
           {seatingMap.right.map((p, i) => (
             <PlayerDisplay
-              key={p.id}
+              key={p.id} playerId={playerId}
               player={p}
               onPress={() => onSelectPlayer(p.id)}
             />
@@ -218,7 +227,7 @@ const SpectatorTable: React.FC<SpectatorTableProps> = ({ store, onSelectPlayer }
   );
 };
 
-export default SpectatorTable;
+export default PlayerTable;
 
 const styles = StyleSheet.create({
   container: {

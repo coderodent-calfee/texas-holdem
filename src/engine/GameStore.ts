@@ -6,7 +6,7 @@ export interface GameStore {
   getEngineState(): EngineState;
   getPublicState(): EnginePublicState;
   getPlayers(): EnginePlayer[];
-
+  getHoleCards(playerId: string): [CardCode, CardCode] | null;
   // Game progression
   step(): boolean;
   advanceDealer(): void;

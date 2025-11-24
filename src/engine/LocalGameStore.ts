@@ -104,6 +104,12 @@ export class LocalGameStore {
     }
   }
 
+  getHoleCards(playerId: string): [CardCode, CardCode] | null {
+    const engineState = this.engine.getPublicState();
+    const player = engineState.players.find(p => p.id === playerId);
+    if (!player) return null;
+    return player.holeCards;
+  }
 
   getPlayers(): EnginePlayer[] {
     return this.getPublicState().players;
