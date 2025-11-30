@@ -11,38 +11,49 @@ import {
   EnginePublicState,
   TexasHoldemEngine
 } from "../engine/TexasHoldemEngine";
-import Chip from "../components/Chip";
+//import Chip from "../components/Chip";
 import ChipSVG from "../components/ChipSVG";
-import VerticalProgressBar from "../components/Thermometer";
+import ProgressBar from "../components/ProgressBar";
+import { BetAmountSelector } from "../components/BetAmountSelector";
+import { PlayerAction } from "../engine/BettingEngine";
+import { convertAmountToChipStacks } from "../components/Chip";
 
 interface PlayerTableProps {
   store: GameStore;
   onSelectPlayer: (id: string) => void;
-  playerId: string;
+  displayedPlayerId: string;
 }
 
-const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, playerId }) => {
+const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, displayedPlayerId }) => {
+  const [bettingMode, setBettingMode] = useState<PlayerAction | null>(null);
+  const [pendingAmount, setPendingAmount] = useState<number>(0);
+  const [activePlayerId, setActivePlayerId] = useState<string | null>(null);
+
   const { state,
-    players,
+    players: playersArg,
     communityCards,
     dealerId,
-    pot,
-    minBet,
-    toCall,
   } = store.getPublicState();
 
+  const originalIndex = playersArg.findIndex(p => p.id === displayedPlayerId);
+  const players = playersArg.slice(originalIndex).concat(playersArg.slice(0, originalIndex));
+
   if (!players || players.length < 2) return null;
-  const player = players.find(p => p.id === playerId);
+  const player = players.find(p => p.id === displayedPlayerId);
   if (!player) {
     return <Text>Player not found</Text>;
   }
-  const isSelf = player.id === playerId;
-  if(isSelf){
-    const holeCards = store.getHoleCards(playerId);
-    if(holeCards){
+  const isSelf = player.id === displayedPlayerId;
+  if (isSelf) {
+    const holeCards = store.getHoleCards(displayedPlayerId);
+    if (holeCards) {
       player.holeCards = holeCards;
     }
   }
+  const canAct = (id: string): boolean => {
+    return isSelf && store.getCurrentPlayer()?.id === id;
+  };
+
 
   const seatingMap: {
     top: EnginePlayer[];
@@ -95,14 +106,41 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, player
   // Reverse the order for clockwise display from dealer left
   seatingMap.bottom = seatingMap.bottom.reverse();
   seatingMap.left = seatingMap.left.reverse();
-  console.log("communityCards =", communityCards);
+
+  const allowedMoves = canAct(player.id) ? store.getAllowedActions() : undefined;
+
+  const betting = store.getBettingState();
+  if (canAct(player.id)) { console.log(`Player:${player.name} allowed moves:`, allowedMoves, ' bet ', betting); }
+
+  const handlePlayerAction = (action: PlayerAction) => {
+    console.log(`handlePlayerAction: ${action}`);
+    if (action === "bet" || action === "raise") {
+      setActivePlayerId(player.id);
+      setBettingMode(action);
+      const betting = store.getBettingState();
+      setPendingAmount(betting.minBet);
+    }
+    else {
+      // action is "call", "check", or "fold"
+      const ok = store.applyPlayerAction(action);
+    }
+  };
+  
+  const handleBetConfirm = (amount: number) => {
+    console.log(`handleBetConfirm: ${bettingMode} ${amount}`);
+    if (bettingMode) {
+      const ok = store.applyPlayerAction(bettingMode, amount);
+      setBettingMode(null);
+    }
+  };
+  
+  const handleBetCancel = () => {
+    setBettingMode(null);
+  };
+
   return (
     <View style={styles.container}>
-
-
       <View style={styles.oval} />
-
-
       <View
         style={styles.content}
       >
@@ -115,9 +153,12 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, player
         >
           {seatingMap.left.map((p) => (
             <PlayerDisplay
-              key={p.id} playerId={playerId}
+              key={p.id}
+              displayedPlayerId={displayedPlayerId}
               player={p}
+              {...(canAct(p.id) ? { allowedMoves } : {})}
               onPress={() => onSelectPlayer(p.id)}
+              handlePlayerAction={(action: PlayerAction) => { handlePlayerAction(action as PlayerAction) }}
             />
           ))}
         </View>
@@ -145,7 +186,9 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, player
                 <PlayerDisplay
                   player={p}
                   onPress={() => onSelectPlayer(p.id)}
-                   playerId={playerId}
+                  handlePlayerAction={(action: PlayerAction) => { handlePlayerAction(action.toLowerCase() as PlayerAction) }}
+                  {...(canAct(p.id) ? { allowedMoves } : {})}
+                  displayedPlayerId={displayedPlayerId}
                 />
               </View>
             ))}
@@ -161,27 +204,34 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, player
             }}
           >
 
-            <View style={{
-              alignItems: "center",
-              minHeight: 154,
-            }}>
-<ChipSVG size={100}
-                  stacks={[
-                    { chipCount: 1, color: "#005637" }, // green $25 #0FA15B #4A6330 "#017945" #005637
-                    { chipCount: 15, color: "#016EB1" }, // blue $10 #283371 #016EB1
-                    { chipCount: 25, color: "#812c05ff" }, // red : $5
-                    { chipCount: 5, color: "#cacacaff", rim: "#000000" }, // white $1
-                  ]}
-                ></ChipSVG>              
-              <Text style={{ fontSize: 20, fontWeight: "bold" }}>Player Table Pot: {pot}</Text>
-              <Text>Live Bet: {toCall}</Text>
-              <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>
-                {communityCards.map((c) => (
-                  <Card key={c} code={c} width={70} height={100} />
-                ))}
-                
+            {(bettingMode === "bet" || bettingMode === "raise") && (
+              <View>
+                <BetAmountSelector
+                  min={betting.minBet}
+                  max={player.chips}
+                  stack={player.chips}
+                  onConfirm={(amount) => { handleBetConfirm(amount); }}
+                  onCancel={handleBetCancel}
+                />
               </View>
-            </View>
+            )}
+            {(bettingMode !== "bet" && bettingMode !== "raise") && (
+              <View style={{
+                alignItems: "center",
+                minHeight: 154,
+              }}>
+                <ChipSVG size={100}
+                  stacks={convertAmountToChipStacks(betting.pot)}
+                ></ChipSVG>
+                <Text style={{ fontSize: 20, fontWeight: "bold" }}>Player Table Pot: {betting.pot}</Text>
+                <Text>Live Bet: {betting.toCall}</Text>
+                <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>
+                  {communityCards.map((c) => (
+                    <Card key={c} code={c} width={70} height={100} />
+                  ))}
+                </View>
+              </View>
+            )}
 
           </View>
           {/* Bottom row */}
@@ -197,8 +247,10 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, player
               <View key={p.id} style={{ flex: 1, alignItems: "center" }}>
                 <PlayerDisplay
                   player={p}
-                  onPress={() => onSelectPlayer(p.id) }
-                  playerId={playerId}  
+                  onPress={() => onSelectPlayer(p.id)}
+                  {...(canAct(p.id) ? { allowedMoves } : {})}
+                  displayedPlayerId={displayedPlayerId}
+                  handlePlayerAction={(action: PlayerAction) => { handlePlayerAction(action.toLowerCase() as PlayerAction) }}
                 />
               </View>
             ))}
@@ -215,9 +267,12 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, player
         >
           {seatingMap.right.map((p, i) => (
             <PlayerDisplay
-              key={p.id} playerId={playerId}
+              key={p.id}
+              displayedPlayerId={displayedPlayerId}
               player={p}
+              {...(canAct(p.id) ? { allowedMoves } : {})}
               onPress={() => onSelectPlayer(p.id)}
+              handlePlayerAction={(action: PlayerAction) => { handlePlayerAction(action.toLowerCase() as PlayerAction) }}
             />
           ))}
         </View>
@@ -271,14 +326,3 @@ const styles = StyleSheet.create({
 
 });
 
-/*
-
-41 pixels high for 120 chips  at size 20
-
- aspect 0.45 chipHeight 9 count 120 stackSpacing 3 totalStackHeight 366
-
- individual chip height should be 0.341
-
-one chip at 200 is 50 pixels
-
-*/

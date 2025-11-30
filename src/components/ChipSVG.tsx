@@ -1,5 +1,6 @@
 // ChipSVG.tsx
 import React from "react";
+import {normalizeColor} from "../components/Chip";
 
 const CHIP_SIDE = 16;
 const CHIP_OVAL_H = 18;
@@ -7,17 +8,15 @@ const CHIP_OVAL_Y = 26;
 const CHIP_TOTAL = CHIP_OVAL_H + CHIP_SIDE + CHIP_OVAL_H;
 const CHIP_TOP_OFFSET = CHIP_OVAL_Y - CHIP_OVAL_H;
 
-
 const CHIP_OVAL_W = 80;
 const CHIP_W = CHIP_OVAL_W * 2;
 const CHIP_STACK_GAP = 0;
 
 const DEFAULT_RIM_COLOR_MOD = 0.1;
 
+
 interface ChipSVGProps {
     size?: number;
-    color?: string;
-    rimColor?: string;
     stroke?: string;
     ariaLabel?: string;
     count?: number;      // number of chips in stack
@@ -27,8 +26,6 @@ interface ChipSVGProps {
 
 export default function ChipSVG({
     size = 30,
-    color = "#d33",
-    rimColor,
     stroke = "rgba(0,0,0,0.12)",
     ariaLabel = "Poker chip",
     count = 1,
@@ -67,18 +64,44 @@ export default function ChipSVG({
 
                 // Calculate rim color here (copied from your original logic)
                 const hex = (c: string) => c.replace("#", "");
-                stack.rim = stack.rim || stack.color;
-                try {
-                    const h = hex(stack.color);
-                    if (h.length === 6) {
-                        const r = parseInt(h.slice(0, 2), 16);
-                        const g = parseInt(h.slice(2, 4), 16);
-                        const b = parseInt(h.slice(4, 6), 16);
-                        stack.rim = `rgb(${Math.round(r * DEFAULT_RIM_COLOR_MOD)},${Math.round(
-                            g * DEFAULT_RIM_COLOR_MOD
-                        )},${Math.round(b * DEFAULT_RIM_COLOR_MOD)})`;
+                let rim = stack.rim;
+
+                // Only generate rim automatically if none was supplied
+                if (!rim) {
+                    try {
+                        const raw = normalizeColor(stack.color);
+                        if (!raw) {
+                            rim = stack.color; // fallback
+                        } else {
+                            const h = raw.replace("#", "");
+                            if (h.length === 6) {
+                                const r = parseInt(h.slice(0, 2), 16);
+                                const g = parseInt(h.slice(2, 4), 16);
+                                const b = parseInt(h.slice(4, 6), 16);
+                                rim = `rgb(${Math.round(r * DEFAULT_RIM_COLOR_MOD)},${Math.round(
+                                    g * DEFAULT_RIM_COLOR_MOD
+                                )},${Math.round(b * DEFAULT_RIM_COLOR_MOD)})`;
+                            }
+                        }
+
+
+                        const h = stack.color.replace("#", "");
+                        if (h.length === 6) {
+                            const r = parseInt(h.slice(0, 2), 16);
+                            const g = parseInt(h.slice(2, 4), 16);
+                            const b = parseInt(h.slice(4, 6), 16);
+                            rim = `rgb(${Math.round(r * DEFAULT_RIM_COLOR_MOD)},${Math.round(
+                                g * DEFAULT_RIM_COLOR_MOD
+                            )},${Math.round(b * DEFAULT_RIM_COLOR_MOD)})`;
+                        }
+                    } catch {
+                        // fallback if color can't be parsed
+                        rim = stack.color;
                     }
-                } catch { }
+                }
+
+                stack.rim = rim;
+
 
                 return (
                     <g key={stackIndex}>

@@ -134,7 +134,7 @@ export default function SpectatorTableWrapper({ onSelectPlayer }: Props) {
       <View style={{ flex: 1 }}>
 
 {mode === "spectator"? <SpectatorTable store={store} onSelectPlayer={handleSelectPlayer} /> :
-        <PlayerTable store={store} onSelectPlayer={handleSelectPlayer} playerId={currentPlayer.id} />
+        <PlayerTable store={store} onSelectPlayer={handleSelectPlayer} displayedPlayerId={currentPlayer.id} />
 
 }
 

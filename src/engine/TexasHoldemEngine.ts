@@ -35,9 +35,6 @@ export interface EnginePublicState {
   players: EnginePlayer[];
   communityCards: CardCode[];
   dealerId: string;
-  pot: number;
-  minBet: number;
-  toCall: number;
   scores?: Record<string, HandScore>;
   winners?: string[];
 }
@@ -53,10 +50,6 @@ export class TexasHoldemEngine {
   private state: EngineState = "Blinds & Ante";
 
   private dealerId = "";
-  private pot = 0;
-
-  private minBet = 0;
-  private toCall = 0;
   private scores: Record<string, HandScore> = {};
   private winners: string[] = [];
 
@@ -151,9 +144,6 @@ export class TexasHoldemEngine {
       players: this.players,
       communityCards: this.communityCards,
       dealerId: this.dealerId,
-      pot: this.pot,
-      minBet: this.minBet,
-      toCall: this.toCall,
       scores: this.state === "reveal" ? this.scores : undefined,
       winners: this.state === "reveal" ? this.winners : undefined,
     };
@@ -165,9 +155,6 @@ export class TexasHoldemEngine {
 
   private resetInternalState() {
     this.communityCards = [];
-    this.pot = 0;
-    this.minBet = 0;
-    this.toCall = 0;
     console.log("this.players ", this.players);
     if (!Array.isArray(this.players)) {
       console.warn("players is not an array, resetting to empty array", this.players);
@@ -240,7 +227,7 @@ export class TexasHoldemEngine {
       if (!p.folded && p.holeCards) {
         this.scores[p.id] = scoreHand(p.holeCards, this.communityCards);
       }
-      console.log(`Player:${p.name} has a ${this.scores[p.id].type} with ${this.scores[p.id].ranks}`);
+      console.log(`Player:${p.name} has a ${this.scores[p.id]?.type} with ${this.scores[p.id]?.ranks}`);
     }
     this.winners = determineWinners(this.scores);
     this.winners.forEach((id) => {

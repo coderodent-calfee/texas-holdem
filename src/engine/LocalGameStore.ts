@@ -15,6 +15,7 @@ import { CardCode, generateDeck, shuffle, BACK } from "../engine/cards"; // adju
 import { fakeGame } from "../data/fakeGame";
 import { fakePlayers } from "../data/fakePlayers";
 import type { Player } from "../types/Player";
+import { AllowedActions, BettingEngine, BettingEngineState, PlayerAction } from "./BettingEngine";
 
 const enginePlayers: EnginePlayer[] =
   fakePlayers.map((p, index) => {
@@ -34,16 +35,20 @@ const enginePlayers: EnginePlayer[] =
 // LocalGameStore
 // ---------------------------------------------
 export class LocalGameStore {
-  private engine: TexasHoldemEngine;
+  private gameEngine: TexasHoldemEngine;
+  private bettingEngine: BettingEngine;
   private publicState: EnginePublicState;
   // Number of players active (2–10)
   private playerCount: number = 7;
+  private currentPlayerIndex: number | null = 0;
 
   constructor() {
-    this.engine = new TexasHoldemEngine();
+    this.gameEngine = new TexasHoldemEngine();
+    this.bettingEngine = new BettingEngine();
     this.initializeFromFake();
     // Capture initial public state
     this.publicState = this.getPublicState();
+    this.startBettingRound();
   }
 
   // ---------------------------------------------------
@@ -51,10 +56,10 @@ export class LocalGameStore {
   // ---------------------------------------------------
   private initializeFromFake() {
     // Install fake players
-    this.engine.setPlayers(enginePlayers.slice(0, this.playerCount));
+    this.gameEngine.setPlayers(enginePlayers.slice(0, this.playerCount));
 
     // Reset the first hand
-    this.engine.resetHand();
+    this.gameEngine.resetHand();
 
     // Capture initial public state
     this.publicState = this.getPublicState();
@@ -63,12 +68,80 @@ export class LocalGameStore {
   // ---------------------------------------------------
   // Accessors
   // ---------------------------------------------------
+  getCurrentPlayer(): EnginePlayer | null {
+    const engineState = this.gameEngine.getPublicState();
+    const players = engineState.players;
+    return this.currentPlayerIndex != null ? players[this.currentPlayerIndex] : null;
+  }
+
   getEngineState(): EngineState {
     return this.getPublicState().state;
   }
 
+  getBettingState(): BettingEngineState {
+    return this.bettingEngine.getState();
+  }
+
+  getAllowedActions(): AllowedActions {
+    const engineState = this.gameEngine.getPublicState();
+    const players = engineState.players;
+    const state = engineState.state;
+    if (state === "Blinds & Ante") {
+      return {
+        canCheck: false,
+        canCall: false,
+        canBet: false,
+        canRaise: false,
+        minBet: 0,
+        maxBet: null,
+        canFold: false
+      };
+    }
+    if (state === "reveal") {
+      return {
+        canCheck: false,
+        canCall: false,
+        canBet: false,
+        canRaise: false,
+        minBet: 0,
+        maxBet: null,
+        canFold: false
+      };
+    }
+    const currentPlayer = this.getCurrentPlayer();
+    if (!currentPlayer) {
+      return {
+        canCheck: false,
+        canCall: false,
+        canBet: false,
+        canRaise: false,
+        minBet: 0,
+        maxBet: null,
+        canFold: false
+      };
+    }
+    return this.bettingEngine.getAllowedActions(currentPlayer);
+  }
+
+  applyPlayerAction(action: PlayerAction, amount?: number): boolean {
+    const ok = this.bettingEngine.applyPlayerAction(this.getCurrentPlayer(), action, amount);
+    if(ok){
+      if( this.bettingEngine.isRoundComplete(  this.getPlayers() ) ){
+        this.step();
+        this.startBettingRound();
+      }
+      else{
+        const engineState = this.gameEngine.getPublicState();
+
+        // TODO: what if there is no index?
+        this.currentPlayerIndex = this.currentPlayerIndex && this.getNextActivePlayerIndex(engineState.players, this.currentPlayerIndex);
+      }
+    }
+    return ok;
+  }
+
   getPublicState(): EnginePublicState {
-    const engineState = this.engine.getPublicState();
+    const engineState = this.gameEngine.getPublicState();
 
     const players = engineState.players;
     const dealerIndex = players.findIndex(p => p.id === engineState.dealerId);
@@ -105,7 +178,7 @@ export class LocalGameStore {
   }
 
   getHoleCards(playerId: string): [CardCode, CardCode] | null {
-    const engineState = this.engine.getPublicState();
+    const engineState = this.gameEngine.getPublicState();
     const player = engineState.players.find(p => p.id === playerId);
     if (!player) return null;
     return player.holeCards;
@@ -114,26 +187,62 @@ export class LocalGameStore {
   getPlayers(): EnginePlayer[] {
     return this.getPublicState().players;
   }
+
+  /**
+  * Returns the next active player index, skipping folded players.
+  * @param players EnginePlayer array
+  * @param startIndex Index to start searching from (exclusive)
+  */
+  getNextActivePlayerIndex(players: EnginePlayer[], startIndex: number): number | null {
+    const total = players.length;
+    if (total === 0) return null;
+
+    let idx = (startIndex + 1) % total;
+
+    while (idx !== startIndex) {
+      const player = players[idx];
+      if (!player.folded) return idx;
+      idx = (idx + 1) % total;
+    }
+
+    // check if the startIndex player is active (edge case: only one active player)
+    if (!players[startIndex].folded) return startIndex;
+
+    return null; // all players folded
+  }
+
   // ---------------------------------------------------
   // Advance the game by one engine action
   // (for local testing this might simulate dealing,
   // progressing betting rounds, etc.)
   // ---------------------------------------------------
   step(): boolean {
-    const canContinue = this.engine.step();
+    const canContinue = this.gameEngine.step();
     this.publicState = this.getPublicState();
     return canContinue;
   }
 
+  isRoundComplete(players: EnginePlayer[]): boolean {
+    return this.bettingEngine.isRoundComplete(players);
+  }
 
   advanceDealer(): void {
-    this.engine.nextDealer();
+    this.gameEngine.nextDealer();
+  }
+
+  startBettingRound() {
+    const engineState = this.gameEngine.getPublicState();
+    const dealerIndex = engineState.players.findIndex(p => p.id === engineState.dealerId);
+    const smallIndex = this.getNextActivePlayerIndex(engineState.players, dealerIndex);
+    const bigIndex = smallIndex && this.getNextActivePlayerIndex(engineState.players, smallIndex);
+    this.currentPlayerIndex = bigIndex && this.getNextActivePlayerIndex(engineState.players, bigIndex);
+    this.bettingEngine.beginNewBettingRound(engineState.players);
   }
   // ---------------------------------------------------
   // Start a brand new hand with a fresh deck
   // ---------------------------------------------------
   resetHandWithDeck(deck: CardCode[]) {
-    this.engine.resetHandWithDeck(deck);
+    this.gameEngine.resetHandWithDeck(deck);
     this.publicState = this.getPublicState();
   }
 
@@ -141,7 +250,7 @@ export class LocalGameStore {
   // Start a brand new hand but keep the current deck
   // ---------------------------------------------------
   resetHand() {
-    this.engine.resetHand();
+    this.gameEngine.resetHand();
     this.publicState = this.getPublicState();
   }
 
@@ -150,8 +259,8 @@ export class LocalGameStore {
   // change number of players
   // ---------------------------------------------------
   setPlayers(players: EnginePlayer[]) {
-    this.engine.setPlayers(players);
-    this.engine.resetHand();
+    this.gameEngine.setPlayers(players);
+    this.gameEngine.resetHand();
     this.publicState = this.getPublicState();
   }
 
@@ -193,9 +302,9 @@ export class LocalGameStore {
       }
     }
 
-    this.engine.setPlayers(enginePlayers.slice(0, this.playerCount));
+    this.gameEngine.setPlayers(enginePlayers.slice(0, this.playerCount));
 
-    this.publicState = this.engine.getPublicState();
+    this.publicState = this.gameEngine.getPublicState();
   }
 }
 

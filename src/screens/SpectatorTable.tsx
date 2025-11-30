@@ -11,9 +11,9 @@ import {
   EnginePublicState,
   TexasHoldemEngine
 } from "../engine/TexasHoldemEngine";
-import Chip from "../components/Chip";
 import ChipSVG from "../components/ChipSVG";
-import VerticalProgressBar from "../components/Thermometer";
+import ProgressBar from "../components/ProgressBar";
+import { ONE_DOLLAR_CHIP,FIVE_DOLLAR_CHIP, TEN_DOLLAR_CHIP, TWENTY_FIVE_DOLLAR_CHIP } from "../components/Chip";
 
 interface SpectatorTableProps {
   store: GameStore;
@@ -25,9 +25,6 @@ const SpectatorTable: React.FC<SpectatorTableProps> = ({ store, onSelectPlayer }
     players,
     communityCards,
     dealerId,
-    pot,
-    minBet,
-    toCall,
   } = store.getPublicState();
 
   if (!players || players.length < 2) return null;
@@ -83,8 +80,8 @@ const SpectatorTable: React.FC<SpectatorTableProps> = ({ store, onSelectPlayer }
   // Reverse the order for clockwise display from dealer left
   seatingMap.bottom = seatingMap.bottom.reverse();
   seatingMap.left = seatingMap.left.reverse();
-  console.log("communityCards =", communityCards);
-  return (
+    const betting = store.getBettingState();
+    return (
     <View style={styles.container}>
 
 
@@ -152,29 +149,23 @@ const SpectatorTable: React.FC<SpectatorTableProps> = ({ store, onSelectPlayer }
               alignItems: "center",
               minHeight: 154,
             }}>
-              <Text style={{ fontSize: 20, fontWeight: "bold" }}>Spectator Table Pot: {pot}</Text>
-              <Text>Live Bet: {toCall}</Text>
+              <Text style={{ fontSize: 20, fontWeight: "bold" }}>Spectator Table Pot: {betting.pot}</Text>
+              <Text>Live Bet: {betting.toCall}</Text>
               <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>
                 {communityCards.map((c) => (
                   <Card key={c} code={c} width={70} height={100} />
                 ))}
                 <ChipSVG size={150}
                   stacks={[
-                    { chipCount: 1, color: "#005637" }, // green $25 #0FA15B #4A6330 "#017945" #005637
-                    { chipCount: 15, color: "#016EB1" }, // blue $10 #283371 #016EB1
-                    { chipCount: 25, color: "#812c05ff" }, // red : $5
-                    { chipCount: 5, color: "#cacacaff", rim: "#000000" }, // white $1
+                    { chipCount: 1, ...TWENTY_FIVE_DOLLAR_CHIP }, 
+                    { chipCount: 15, ...TEN_DOLLAR_CHIP }, // blue $10 #283371 #016EB1
+                    { chipCount: 25, ...FIVE_DOLLAR_CHIP }, // red : $5
+                    { chipCount: 5, ...ONE_DOLLAR_CHIP }, // white $1
                   ]}
                 ></ChipSVG>
               </View>
             </View>
-            {/* <VerticalProgressBar
-                value={200}
-                maxValue={500}
-                barColor="#00ade9" // A nice blue color
-                containerHeight={200} // Total height of the thermometer
-                containerWidth={30} // Width of the thermometer
-              /> */}
+
           </View>
           {/* Bottom row */}
           <View
