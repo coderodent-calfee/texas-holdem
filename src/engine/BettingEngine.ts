@@ -1,5 +1,6 @@
 // BettingEngine.ts
 import type { EnginePlayer } from "./TexasHoldemEngine";
+
 export const BETTING_ACTIONS = [
     "check",
     "call",
@@ -9,22 +10,43 @@ export const BETTING_ACTIONS = [
 ] as const;
 
 export type PlayerAction = (typeof BETTING_ACTIONS)[number];
-
+// (bettingMode === "bet")?{allowedMoves?.minBet ?? 0} :{allowedMoves?.minBet ?? 0}
 export interface AllowedActions {
-    canCheck: boolean;     // Player may check (no bet to call)
-    canCall: boolean;      // Player may call (facing a bet)
-    canBet: boolean;       // Player may place the first bet of a round
-    canRaise: boolean;     // Player may raise an existing bet
-    minBet: number;        // Minimum legal bet or raise amount
-    maxBet: number | null; // Maximum bet (chips or null for all-in allowed)
-    canFold: boolean;      // Player may fold
+    canFold: boolean;
+    canCheck: boolean;
+    canCall: boolean;
+    canBet: boolean;
+    canRaise: boolean;
+
+    // Amounts (null if not applicable)
+    callAmount: number | null;     // how much needed to call
+    minBet: number | null;         // minimum opening bet
+    minRaise: number | null;       // minimum raise *increment*
+    maxBet: number;             // player's all-in cap
+
+    // helper: Is player allowed to go all-in (always true unless already all-in)
+    canAllIn: boolean;
 }
 
+export const noActions: AllowedActions = {
+    canFold: false,
+    canCheck: false,
+    canCall: false,
+    canBet: false,
+    canRaise: false,
 
-interface BettingEngineState {
+    callAmount: null,
+    minBet: null,
+    minRaise: null,
+    maxBet: 0,
+
+    canAllIn: false
+};
+
+export interface BettingEngineState {
     pot: number;
     toCall: number;
-    lastRaiseSize: number;
+    lastRaise: number;
     lastAggressor: string | null;
     bigBlind: number;
     roundComplete: boolean;
@@ -37,7 +59,7 @@ export class BettingEngine {
         this.state = {
             pot: 0,
             toCall: 0,
-            lastRaiseSize: bigBlind,
+            lastRaise: bigBlind,
             lastAggressor: null,
 
             bigBlind,
@@ -47,74 +69,76 @@ export class BettingEngine {
     }
 
     getAllowedActions(player: EnginePlayer): AllowedActions {
-        // --- Invalid or folded player ---
-        if (!player || player.folded) {
-            return {
-                canCheck: false,
-                canCall: false,
-                canBet: false,
-                canRaise: false,
-                minBet: 0,
-                maxBet: null,
-                canFold: false,
-            };
-        }
-
+        const { toCall, lastRaise } = this.state;
         const committed = player.committed;
         const chips = player.chips;
-        const toCall = this.state.toCall;
-        const facingBet = committed < toCall;
 
-        // Fold is always allowed (even if checking is available)
-        const canFold = true;
+        // Player is facing a bet if their committed amount is below the highest committed
+        const facing = committed < toCall;
+
+        // Amount needed to call
+        const callAmount = facing ? Math.min(chips, toCall - committed) : 0;
+
+        // Fold is always allowed unless player is already all-in
+        const canFold = chips > 0;
 
         // --- Check / Call ---
-        const canCheck = !facingBet;
-        const canCall = facingBet && chips > 0;
+        const canCheck = !facing && chips > 0;
+        const canCall = facing && chips > 0;
 
-        // Amount required to *fully* call
-        const callAmount = Math.min(chips, toCall - committed);
-
-        // --- Betting / Raising ---
+        // --- Bet / Raise ---
         let canBet = false;
         let canRaise = false;
-        let minBet = 0;
-        let maxBet: number | null = chips; // all-in always possible
 
-        if (!facingBet) {
+        // Min bet / raise amounts (null if not applicable)
+        let minBet: number | null = null;
+        let minRaise: number | null = null;
+
+        if (!facing) {
             //
-            // *** BETTING: no one has bet yet ***
+            // ********** BETTING ROUND IS UNOPENED **********
+            // Player may open the betting with a bet
             //
             canBet = chips > 0;
-
-            // Typical rule: min opening bet = big blind
-            const bigBlind = this.state.bigBlind;
-            minBet = Math.min(chips, bigBlind);
+            minBet = Math.min(chips, this.state.bigBlind); // standard rule
+            minRaise = null; // no raise because no bet exists yet
         } else {
             //
-            // *** RAISING: a bet exists ***
+            // ********** PLAYER IS FACING A BET **********
+            // Player may raise if they have enough chips to at least call first
             //
+            const amountNeededToCall = toCall - committed;
 
-            // The size of the last bet or raise (NLHE rule)
-            const minRaise = this.state.minBet;
+            // Player must be able to call before raising
+            if (chips > amountNeededToCall) {
+                canRaise = true;
 
-            // The minimum *total* amount the player must put in
-            const raiseRequired = (toCall - committed) + minRaise;
+                // Legal minimum total raise:
+                //   newBet = toCall + lastRaise
+                //
+                const totalNeeded = (toCall - committed) + lastRaise;
+                minRaise = Math.min(chips, totalNeeded);
 
-            // Player must have enough to at least call before a raise
-            canRaise = chips > (toCall - committed);
-
-            minBet = Math.min(chips, raiseRequired);
+                minBet = null; // betting is closed; only raises make sense
+            }
         }
 
+        // Max amount is always player's stack (all-in cap)
+        const maxAmount = chips;
+
         return {
+            canFold,
             canCheck,
             canCall,
             canBet,
             canRaise,
+
+            callAmount: facing ? callAmount : null,
             minBet,
-            maxBet,
-            canFold,
+            minRaise,
+            maxBet: maxAmount,
+
+            canAllIn: chips > 0
         };
     }
 
@@ -180,7 +204,10 @@ export class BettingEngine {
                 console.log("VALIDATION FAIL: bet requires amount");
                 return false;
             }
-
+            if (allowed.minBet === null) {
+                console.log("VALIDATION FAIL: bet requires minBet");
+                return false;
+            }
             if (amount < allowed.minBet) {
                 console.log(
                     `VALIDATION FAIL: bet amount ${amount} < minBet ${allowed.minBet}`
@@ -225,7 +252,10 @@ export class BettingEngine {
                 );
                 return false;
             }
-
+            if (allowed.minBet === null) {
+                console.log("VALIDATION FAIL: raise requires minBet");
+                return false;
+            }
             if (raisePart < allowed.minBet && amount < chips) {
                 console.log(
                     `VALIDATION FAIL: raise amount ${raisePart} < minBet ${allowed.minBet}`
@@ -249,54 +279,73 @@ export class BettingEngine {
 
 
     applyPlayerAction(player: EnginePlayer | null, action: PlayerAction, amount?: number): boolean {
-        if (!player) {
-            return false;
-        }
-        if (!this._validatePlayerAction(player, action, amount)) {
-            return false;
-        }
-        // --- Apply action --- 
+        if (!player) return false;
+        if (!this._validatePlayerAction(player, action, amount)) return false;
+
+        const state = this.state;
+        const toCallBefore = state.toCall;    // key for raise math
+        const committedBefore = player.committed;
+
         switch (action) {
+
             case "fold":
                 player.folded = true;
-                break;
-            case "check": // nothing to do 
-                break;
-            case "call":
-                const toCall = this.state.toCall - player.committed;
-                const callAmount = Math.min(toCall, player.chips);
+                return true;
+
+            case "check":
+                return true;
+
+            case "call": {
+                const amountNeeded = toCallBefore - committedBefore;
+                const callAmount = Math.min(player.chips, amountNeeded);
+
                 player.chips -= callAmount;
                 player.committed += callAmount;
-                this.state.pot += callAmount;
-                break;
-            case "bet":
-                const betAmount = Math.min(amount!, player.chips);
+                state.pot += callAmount;
+
+                // calling never changes lastRaise or lastAggressor
+                return true;
+            }
+
+            case "bet": {
+                const betAmount = amount!;  // total bet amount
+
+                // Player is betting from zero commitment (unopened round)
                 player.chips -= betAmount;
                 player.committed += betAmount;
-                this.state.toCall = betAmount;
-                this.state.minBet = betAmount;
-                this.state.pot += betAmount;
-                break;
-            case "raise":
-                const totalContribution = Math.min(amount!, player.chips);   // e.g., 200
-                const callPart = this.state.toCall - player.committed;
-                const raisePart = totalContribution - callPart;             // e.g., 100
+                state.pot += betAmount;
 
-                // Apply the actual contribution
-                player.chips -= totalContribution;
-                player.committed += totalContribution;
-                this.state.toCall = this.state.toCall + raisePart;   // toCall increases only by the RAISE
-                this.state.minBet = raisePart;            // minBet = size of raise ONLY
-                this.state.pot += totalContribution;
+                state.lastRaise = betAmount;   // opening bet sets the raise size
+                state.toCall = player.committed;
+                state.lastAggressor = player.id;
 
-                break;
+                return true;
+            }
+
+            case "raise": {
+                const totalPutIn = amount!;
+                // totalPutIn = callPart + raisePart
+
+                player.chips -= totalPutIn;
+                player.committed += totalPutIn;
+                state.pot += totalPutIn;
+
+                // raise amount = how much MORE the new total exceeds previous toCall
+                const raiseAmount = player.committed - toCallBefore;
+
+                state.lastRaise = raiseAmount;
+                state.toCall = player.committed;
+                state.lastAggressor = player.id;
+
+                return true;
+            }
+
             default:
                 return false;
         }
-
-        return true;
-
     }
+
+
     _evaluateRoundCompletion(players: EnginePlayer[]): void {
         const activePlayers = players.filter(p => !p.folded);
         const allInPlayers = activePlayers.filter(p => p.chips === 0);
@@ -320,8 +369,9 @@ export class BettingEngine {
     beginNewBettingRound(players: EnginePlayer[]) {
         this.state.roundComplete = false;
         this.state.toCall = 0;
-        this.state.minBet = 0;
-
+        
+        this.state.lastRaise = 0;
+        this.state.lastAggressor = null;
         // Reset per-player committed bets for this round
         players.forEach((p) => {
             p.committed = 0;

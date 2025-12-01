@@ -12,7 +12,7 @@ const CHIP_OVAL_W = 80;
 const CHIP_W = CHIP_OVAL_W * 2;
 const CHIP_STACK_GAP = 0;
 
-const DEFAULT_RIM_COLOR_MOD = 0.1;
+const DEFAULT_RIM_COLOR_MOD = 1;
 
 
 interface ChipSVGProps {
@@ -131,19 +131,19 @@ export default function ChipSVG({
                                  draws over the _top_ of the _bottom ellipse_ */}
                                 <rect x={stackX + CHIP_STACK_GAP} y={`${CHIP_OVAL_Y}`} width={`${CHIP_W}`} height={`${CHIP_SIDE}`}
                                     fill={`url(#bandGrad-${uid}-${stackIndex})`}
-                                    stroke={stroke} strokeWidth="2"
+                                    stroke={stack.rim} strokeWidth="2"
                                 />
                                 {/* bottom shadow ellipse (gives the 'thickness' seen from angle) */}
                                 <ellipse cx={stackX + CHIP_OVAL_W + CHIP_STACK_GAP} cy={`${CHIP_OVAL_Y + CHIP_SIDE}`} rx={`${CHIP_OVAL_W}`} ry={`${CHIP_OVAL_H}`}
                                     fill={`url(#bandGrad-${uid}-${stackIndex})`}
-                                    stroke={stroke}
+                                    stroke={stack.rim}
                                     strokeWidth="2"
                                     clipPath={`url(#bottomClip-${uid}-${stackIndex})`}
                                 />
                                 {/* top ellipse (the visible 'top' face) */}
                                 <ellipse cx={stackX + CHIP_OVAL_W + CHIP_STACK_GAP} cy={`${CHIP_OVAL_Y}`} rx={`${CHIP_OVAL_W}`} ry={`${CHIP_OVAL_H}`}
                                     fill={stack.color}
-                                    stroke={stroke}
+                                    stroke={stack.rim}
                                     strokeWidth="2"
                                 />
                                 {/* slight top highlight done as a transparent white */}

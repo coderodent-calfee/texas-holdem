@@ -15,7 +15,7 @@ import { CardCode, generateDeck, shuffle, BACK } from "../engine/cards"; // adju
 import { fakeGame } from "../data/fakeGame";
 import { fakePlayers } from "../data/fakePlayers";
 import type { Player } from "../types/Player";
-import { AllowedActions, BettingEngine, BettingEngineState, PlayerAction } from "./BettingEngine";
+import { AllowedActions, BettingEngine, BettingEngineState, noActions, PlayerAction } from "./BettingEngine";
 
 const enginePlayers: EnginePlayer[] =
   fakePlayers.map((p, index) => {
@@ -87,38 +87,14 @@ export class LocalGameStore {
     const players = engineState.players;
     const state = engineState.state;
     if (state === "Blinds & Ante") {
-      return {
-        canCheck: false,
-        canCall: false,
-        canBet: false,
-        canRaise: false,
-        minBet: 0,
-        maxBet: null,
-        canFold: false
-      };
+      return noActions;
     }
     if (state === "reveal") {
-      return {
-        canCheck: false,
-        canCall: false,
-        canBet: false,
-        canRaise: false,
-        minBet: 0,
-        maxBet: null,
-        canFold: false
-      };
+      return noActions;
     }
     const currentPlayer = this.getCurrentPlayer();
     if (!currentPlayer) {
-      return {
-        canCheck: false,
-        canCall: false,
-        canBet: false,
-        canRaise: false,
-        minBet: 0,
-        maxBet: null,
-        canFold: false
-      };
+      return noActions;
     }
     return this.bettingEngine.getAllowedActions(currentPlayer);
   }

@@ -26,8 +26,7 @@ interface PlayerTableProps {
 
 const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, displayedPlayerId }) => {
   const [bettingMode, setBettingMode] = useState<PlayerAction | null>(null);
-  const [pendingAmount, setPendingAmount] = useState<number>(0);
-  const [activePlayerId, setActivePlayerId] = useState<string | null>(null);
+
 
   const { state,
     players: playersArg,
@@ -115,17 +114,18 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, displa
   const handlePlayerAction = (action: PlayerAction) => {
     console.log(`handlePlayerAction: ${action}`);
     if (action === "bet" || action === "raise") {
-      setActivePlayerId(player.id);
       setBettingMode(action);
       const betting = store.getBettingState();
-      setPendingAmount(betting.minBet);
+    console.log(`handleBetConfirm: allowedMoves`, allowedMoves);
+    console.log(`handleBetConfirm: store.getAllowedActions()`, store.getAllowedActions());
+
     }
     else {
       // action is "call", "check", or "fold"
       const ok = store.applyPlayerAction(action);
     }
   };
-  
+
   const handleBetConfirm = (amount: number) => {
     console.log(`handleBetConfirm: ${bettingMode} ${amount}`);
     if (bettingMode) {
@@ -133,7 +133,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, displa
       setBettingMode(null);
     }
   };
-  
+
   const handleBetCancel = () => {
     setBettingMode(null);
   };
@@ -207,12 +207,13 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, displa
             {(bettingMode === "bet" || bettingMode === "raise") && (
               <View>
                 <BetAmountSelector
-                  min={betting.minBet}
-                  max={player.chips}
+                  min={(bettingMode === "bet")?(allowedMoves?.minBet ?? 0) :(allowedMoves?.minRaise ?? 0)}
+                  max={allowedMoves?.maxBet ?? player.chips}
                   stack={player.chips}
                   onConfirm={(amount) => { handleBetConfirm(amount); }}
                   onCancel={handleBetCancel}
                 />
+
               </View>
             )}
             {(bettingMode !== "bet" && bettingMode !== "raise") && (
