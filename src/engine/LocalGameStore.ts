@@ -108,9 +108,7 @@ export class LocalGameStore {
       }
       else{
         const engineState = this.gameEngine.getPublicState();
-
-        // TODO: what if there is no index?
-        this.currentPlayerIndex = this.currentPlayerIndex && this.getNextActivePlayerIndex(engineState.players, this.currentPlayerIndex);
+        this.currentPlayerIndex = this.getNextActivePlayerIndex(engineState.players, this.currentPlayerIndex!);
       }
     }
     return ok;

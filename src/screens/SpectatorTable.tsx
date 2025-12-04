@@ -14,6 +14,10 @@ import {
 import ChipSVG from "../components/ChipSVG";
 import ProgressBar from "../components/ProgressBar";
 import { ONE_DOLLAR_CHIP,FIVE_DOLLAR_CHIP, TEN_DOLLAR_CHIP, TWENTY_FIVE_DOLLAR_CHIP } from "../components/Chip";
+import { seatPlayers } from "../engine/seating";
+
+
+
 
 interface SpectatorTableProps {
   store: GameStore;
@@ -29,57 +33,60 @@ const SpectatorTable: React.FC<SpectatorTableProps> = ({ store, onSelectPlayer }
 
   if (!players || players.length < 2) return null;
 
-  const seatingMap: {
-    top: EnginePlayer[];
-    bottom: EnginePlayer[];
-    right: EnginePlayer[];
-    left: EnginePlayer[];
-  } = {
-    top: [],
-    bottom: [],
-    right: [],
-    left: []
-  };
+  const seatingMap = seatPlayers(players);
 
-  if (players.length === 2) {
-    seatingMap["bottom"].push(players[0]);
-    seatingMap["top"].push(players[1]);
-  }
-  else if (players.length === 3) {
-    seatingMap["bottom"].push(players[0]);
-    seatingMap["top"].push(players[1]);
-    seatingMap["top"].push(players[2]);
-  }
-  else {
-    type seatKey = keyof typeof seatingMap;
-    const seatingCount: Record<seatKey, number> = Object.fromEntries(
-      Object.keys(seatingMap).map(key => [key, 0])
-    ) as Record<seatKey, number>;
 
-    const addOrder = Object.keys(seatingMap);
-    const seatOrder: seatKey[] = ["bottom", "left", "top", "right"];
+  // const seatingMap: {
+  //   top: EnginePlayer[];
+  //   bottom: EnginePlayer[];
+  //   right: EnginePlayer[];
+  //   left: EnginePlayer[];
+  // } = {
+  //   top: [],
+  //   bottom: [],
+  //   right: [],
+  //   left: []
+  // };
 
-    let index = 0;
-    players.forEach((_, index) => {
-      const seat: seatKey = addOrder[index % addOrder.length] as seatKey;
-      seatingCount[seat] += 1;
-    });
+  // if (players.length === 2) {
+  //   seatingMap["bottom"].push(players[0]);
+  //   seatingMap["top"].push(players[1]);
+  // }
+  // else if (players.length === 3) {
+  //   seatingMap["bottom"].push(players[0]);
+  //   seatingMap["top"].push(players[1]);
+  //   seatingMap["top"].push(players[2]);
+  // }
+  // else {
+    // type seatKey = keyof typeof seatingMap;
+    // const seatingCount: Record<seatKey, number> = Object.fromEntries(
+    //   Object.keys(seatingMap).map(key => [key, 0])
+    // ) as Record<seatKey, number>;
 
-    let currentRow = 0;
-    index = 0;
-    players.forEach((player) => {
-      const row: seatKey = seatOrder[currentRow] as seatKey;
-      seatingMap[row].push(player);
-      if (seatingMap[row].length >= seatingCount[row]) {
-        currentRow += 1;
-      }
-      index += 1;
-    });
-  }
+    // const addOrder = Object.keys(seatingMap);
+    // const seatOrder: seatKey[] = ["bottom", "left", "top", "right"];
+
+    // let index = 0;
+    // players.forEach((_, index) => {
+    //   const seat: seatKey = addOrder[index % addOrder.length] as seatKey;
+    //   seatingCount[seat] += 1;
+    // });
+
+    // let currentRow = 0;
+    // index = 0;
+    // players.forEach((player) => {
+    //   const row: seatKey = seatOrder[currentRow] as seatKey;
+    //   seatingMap[row].push(player);
+    //   if (seatingMap[row].length >= seatingCount[row]) {
+    //     currentRow += 1;
+    //   }
+    //   index += 1;
+    // });
+  // }
 
   // Reverse the order for clockwise display from dealer left
-  seatingMap.bottom = seatingMap.bottom.reverse();
-  seatingMap.left = seatingMap.left.reverse();
+  // seatingMap.bottom = seatingMap.bottom.reverse();
+  // seatingMap.left = seatingMap.left.reverse();
     const betting = store.getBettingState();
     return (
     <View style={styles.container}>

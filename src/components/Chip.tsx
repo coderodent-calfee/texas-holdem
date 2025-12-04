@@ -3,7 +3,7 @@ export const ONE_DOLLAR_CHIP = { color: "#cacacaff", rim: "#000000" }; // white 
 export const FIVE_DOLLAR_CHIP = { color: "#812c05ff" }; // red $5
 export const TEN_DOLLAR_CHIP = { color: "#016EB1" }; // blue $10:  other colors -- #283371 #016EB1
 export const TWENTY_FIVE_DOLLAR_CHIP = { color: "#005637" }; // green $25  other colors --  #0FA15B #4A6330 "#017945" #005637
-export const ONE_HUNDRED_DOLLAR_CHIP = { color: "#222222" , rim: "#cacacaff" }; // black $100
+export const ONE_HUNDRED_DOLLAR_CHIP = { color: "#222222" , rim: "#cacacaff",  textColor: "#cacacaff"}; // black $100
 
 export interface ChipStack {
   chipCount: number;

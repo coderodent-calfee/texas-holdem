@@ -69,6 +69,8 @@ export class BettingEngine {
     }
 
     getAllowedActions(player: EnginePlayer): AllowedActions {
+        console.log("getAllowedActions");
+
         const { toCall, lastRaise } = this.state;
         const committed = player.committed;
         const chips = player.chips;
@@ -147,6 +149,7 @@ export class BettingEngine {
         action: PlayerAction,
         amount?: number
     ): boolean {
+        console.log("_validatePlayerAction -- ?");
 
         if (!player) {
             console.log("VALIDATION FAIL: no player");
@@ -244,7 +247,8 @@ export class BettingEngine {
 
             const callPart = toCall - committed;
             const raisePart = amount - callPart;
-            console.log(`VALIDATION: action ${action} amount ${amount} committed ${committed} toCall ${toCall} chips ${chips}callPart ${callPart} raisePart ${raisePart} `);
+
+            console.log(`VALIDATION: action ${action} amount ${amount} committed ${committed} toCall ${toCall} chips ${chips} callPart ${callPart} raisePart ${raisePart} `);
 
             if (amount < callPart) {
                 console.log(
@@ -252,14 +256,14 @@ export class BettingEngine {
                 );
                 return false;
             }
-            if (allowed.minBet === null) {
-                console.log("VALIDATION FAIL: raise requires minBet");
+            if (allowed.minRaise === null) {
+                console.log("VALIDATION FAIL: raise requires minRaise");
                 return false;
             }
-            if (raisePart < allowed.minBet && amount < chips) {
-                console.log(
-                    `VALIDATION FAIL: raise amount ${raisePart} < minBet ${allowed.minBet}`
-                );
+            if ((raisePart < allowed.minRaise) && (amount < chips)) {
+console.log(
+`VALIDATION FAIL: raisePart ${raisePart} < allowed.minRaise ${allowed.minRaise} && amount ${amount} < chips ${chips} `
+);
                 return false;
             }
 
@@ -370,7 +374,7 @@ export class BettingEngine {
         this.state.roundComplete = false;
         this.state.toCall = 0;
         
-        this.state.lastRaise = 0;
+        this.state.lastRaise = this.state.bigBlind;
         this.state.lastAggressor = null;
         // Reset per-player committed bets for this round
         players.forEach((p) => {

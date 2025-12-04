@@ -15,7 +15,7 @@ import {
 import ChipSVG from "../components/ChipSVG";
 import ProgressBar from "../components/ProgressBar";
 import { BetAmountSelector } from "../components/BetAmountSelector";
-import { PlayerAction } from "../engine/BettingEngine";
+import { noActions, PlayerAction } from "../engine/BettingEngine";
 import { convertAmountToChipStacks } from "../components/Chip";
 
 interface PlayerTableProps {
@@ -26,7 +26,7 @@ interface PlayerTableProps {
 
 const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, displayedPlayerId }) => {
   const [bettingMode, setBettingMode] = useState<PlayerAction | null>(null);
-
+  const currentPlayerId = store.getCurrentPlayer()?.id;
 
   const { state,
     players: playersArg,
@@ -43,6 +43,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, displa
     return <Text>Player not found</Text>;
   }
   const isSelf = player.id === displayedPlayerId;
+  
   if (isSelf) {
     const holeCards = store.getHoleCards(displayedPlayerId);
     if (holeCards) {
@@ -106,37 +107,55 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, displa
   seatingMap.bottom = seatingMap.bottom.reverse();
   seatingMap.left = seatingMap.left.reverse();
 
-  const allowedMoves = canAct(player.id) ? store.getAllowedActions() : undefined;
+  const allowedMoves = canAct(player.id) ? store.getAllowedActions() : noActions;
 
   const betting = store.getBettingState();
   if (canAct(player.id)) { console.log(`Player:${player.name} allowed moves:`, allowedMoves, ' bet ', betting); }
 
   const handlePlayerAction = (action: PlayerAction) => {
     console.log(`handlePlayerAction: ${action}`);
+
+    // Bet or raise opens BetAmountSelector
     if (action === "bet" || action === "raise") {
       setBettingMode(action);
-      const betting = store.getBettingState();
-    console.log(`handleBetConfirm: allowedMoves`, allowedMoves);
-    console.log(`handleBetConfirm: store.getAllowedActions()`, store.getAllowedActions());
-
-    }
-    else {
-      // action is "call", "check", or "fold"
-      const ok = store.applyPlayerAction(action);
+    } else {
+      // Non-bet actions return a promise for consistency
+      Promise.resolve()
+        .then(() => store.applyPlayerAction(action))
+        .then(() => {
+          console.log(`Action '${action}' applied successfully`);
+        })
+        .catch((err) => {
+          console.log(`Action '${action}' failed:`, err);
+        });
     }
   };
 
-  const handleBetConfirm = (amount: number) => {
-    console.log(`handleBetConfirm: ${bettingMode} ${amount}`);
-    if (bettingMode) {
-      const ok = store.applyPlayerAction(bettingMode, amount);
-      setBettingMode(null);
-    }
+
+  const handleBetConfirm = (amount: number, action: string) => {
+    console.log(`handleBetConfirm: ${action} ${amount}`);
+
+    Promise.resolve()
+      .then(() => {
+        if (bettingMode) {
+          const ok = store.applyPlayerAction(bettingMode, amount);
+          if (!ok) { throw new Error("Invalid bet amount"); }
+        }
+      })
+      .then(() => {
+        setBettingMode(null); // close selector after success
+      })
+      .catch((err) => {
+        console.log("Bet failed or canceled:", err);
+        setBettingMode(null); // optionally reset on error/cancel
+      });
   };
 
   const handleBetCancel = () => {
     setBettingMode(null);
   };
+
+
 
   return (
     <View style={styles.container}>
@@ -148,19 +167,31 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, displa
         <View
           style={{
             flexDirection: "column",
-            justifyContent: "center",
+            justifyContent: "space-between",
+            gap: 20,
+
           }}
         >
-          {seatingMap.left.map((p) => (
-            <PlayerDisplay
-              key={p.id}
-              displayedPlayerId={displayedPlayerId}
-              player={p}
-              {...(canAct(p.id) ? { allowedMoves } : {})}
-              onPress={() => onSelectPlayer(p.id)}
-              handlePlayerAction={(action: PlayerAction) => { handlePlayerAction(action as PlayerAction) }}
-            />
-          ))}
+          {seatingMap.left.map((player) => {
+            const isActive = player.id === store.getCurrentPlayer()?.id;
+
+            // Only compute allowedMoves for the active player AND only if it's self
+            const allowedMoves =
+              isSelf && isActive ? store.getAllowedActions() : noActions;
+
+            return (
+              <PlayerDisplay
+                key={player.id}
+                player={player}
+                currentPlayerId={store.getCurrentPlayer()?.id}
+                displayedPlayerId={displayedPlayerId}
+                allowedMoves={allowedMoves}
+                handlePlayerAction={handlePlayerAction}
+                onPress={() => onSelectPlayer(player.id)}
+              />
+            );
+          })}
+
         </View>
 
         {/* --- Middle column: top row, center (pot + community), bottom row --- */}
@@ -181,17 +212,26 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, displa
               gap: 2,
             }}
           >
-            {seatingMap.top.map((p) => (
-              <View key={p.id} style={{ flex: 1, alignItems: "center" }}>
+            {seatingMap.top.map((player) => {
+              const isActive = player.id === store.getCurrentPlayer()?.id;
+
+              // Only compute allowedMoves for the active player AND only if it's self
+              const allowedMoves =
+                isSelf && isActive ? store.getAllowedActions() : noActions;
+
+              return (
                 <PlayerDisplay
-                  player={p}
-                  onPress={() => onSelectPlayer(p.id)}
-                  handlePlayerAction={(action: PlayerAction) => { handlePlayerAction(action.toLowerCase() as PlayerAction) }}
-                  {...(canAct(p.id) ? { allowedMoves } : {})}
+                  key={player.id}
+                  player={player}
+                  currentPlayerId={store.getCurrentPlayer()?.id}
                   displayedPlayerId={displayedPlayerId}
+                  allowedMoves={allowedMoves}
+                  handlePlayerAction={handlePlayerAction}
+                  onPress={() => onSelectPlayer(player.id)}
                 />
-              </View>
-            ))}
+              );
+            })}
+
           </View>
 
           {/* Center: pot & community cards */}
@@ -207,13 +247,12 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, displa
             {(bettingMode === "bet" || bettingMode === "raise") && (
               <View>
                 <BetAmountSelector
-                  min={(bettingMode === "bet")?(allowedMoves?.minBet ?? 0) :(allowedMoves?.minRaise ?? 0)}
-                  max={allowedMoves?.maxBet ?? player.chips}
+                  allowed={allowedMoves}
+                  mode={bettingMode}            // "bet" or "raise"
                   stack={player.chips}
-                  onConfirm={(amount) => { handleBetConfirm(amount); }}
+                  onConfirm={handleBetConfirm}
                   onCancel={handleBetCancel}
                 />
-
               </View>
             )}
             {(bettingMode !== "bet" && bettingMode !== "raise") && (
@@ -239,22 +278,33 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, displa
           <View
             style={{
               flexDirection: "row",
-              justifyContent: "center",
+              justifyContent: "space-between",
+              gap: 20,
+
               width: "100%",
               paddingHorizontal: 10,
             }}
           >
-            {seatingMap.bottom.map((p) => (
-              <View key={p.id} style={{ flex: 1, alignItems: "center" }}>
+            {seatingMap.bottom.map((player) => {
+              const isActive = player.id === store.getCurrentPlayer()?.id;
+
+              // Only compute allowedMoves for the active player AND only if it's self
+              const allowedMoves =
+                isSelf && isActive ? store.getAllowedActions() : noActions;
+
+              return (
                 <PlayerDisplay
-                  player={p}
-                  onPress={() => onSelectPlayer(p.id)}
-                  {...(canAct(p.id) ? { allowedMoves } : {})}
+                  key={player.id}
+                  player={player}
+                  currentPlayerId={store.getCurrentPlayer()?.id}
                   displayedPlayerId={displayedPlayerId}
-                  handlePlayerAction={(action: PlayerAction) => { handlePlayerAction(action.toLowerCase() as PlayerAction) }}
+                  allowedMoves={allowedMoves}
+                  handlePlayerAction={handlePlayerAction}
+                  onPress={() => onSelectPlayer(player.id)}
                 />
-              </View>
-            ))}
+              );
+            })}
+
           </View>
         </View>
 
@@ -266,16 +316,26 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, displa
             gap: 10,
           }}
         >
-          {seatingMap.right.map((p, i) => (
-            <PlayerDisplay
-              key={p.id}
-              displayedPlayerId={displayedPlayerId}
-              player={p}
-              {...(canAct(p.id) ? { allowedMoves } : {})}
-              onPress={() => onSelectPlayer(p.id)}
-              handlePlayerAction={(action: PlayerAction) => { handlePlayerAction(action.toLowerCase() as PlayerAction) }}
-            />
-          ))}
+          {seatingMap.right.map((player) => {
+            const isActive = player.id === store.getCurrentPlayer()?.id;
+
+            // Only compute allowedMoves for the active player AND only if it's self
+            const allowedMoves =
+              isSelf && isActive ? store.getAllowedActions() : noActions;
+
+            return (
+              <PlayerDisplay
+                key={player.id}
+                player={player}
+                currentPlayerId={store.getCurrentPlayer()?.id}
+                displayedPlayerId={displayedPlayerId}
+                allowedMoves={allowedMoves}
+                handlePlayerAction={handlePlayerAction}
+                onPress={() => onSelectPlayer(player.id)}
+              />
+            );
+          })}
+
         </View>
       </View>
     </View>

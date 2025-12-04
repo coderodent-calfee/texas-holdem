@@ -12,7 +12,7 @@ const CHIP_OVAL_W = 80;
 const CHIP_W = CHIP_OVAL_W * 2;
 const CHIP_STACK_GAP = 0;
 
-const DEFAULT_RIM_COLOR_MOD = 1;
+const DEFAULT_RIM_COLOR_MOD = 0.7;
 
 
 interface ChipSVGProps {
@@ -21,7 +21,7 @@ interface ChipSVGProps {
     ariaLabel?: string;
     count?: number;      // number of chips in stack
     spacing?: number;    // optional user override
-    stacks?: { chipCount: number; color: string, rim?: string }[];
+    stacks?: { chipCount: number; color: string, rim?: string, textColor?: string }[];
 }
 
 export default function ChipSVG({
@@ -82,17 +82,6 @@ export default function ChipSVG({
                                     g * DEFAULT_RIM_COLOR_MOD
                                 )},${Math.round(b * DEFAULT_RIM_COLOR_MOD)})`;
                             }
-                        }
-
-
-                        const h = stack.color.replace("#", "");
-                        if (h.length === 6) {
-                            const r = parseInt(h.slice(0, 2), 16);
-                            const g = parseInt(h.slice(2, 4), 16);
-                            const b = parseInt(h.slice(4, 6), 16);
-                            rim = `rgb(${Math.round(r * DEFAULT_RIM_COLOR_MOD)},${Math.round(
-                                g * DEFAULT_RIM_COLOR_MOD
-                            )},${Math.round(b * DEFAULT_RIM_COLOR_MOD)})`;
                         }
                     } catch {
                         // fallback if color can't be parsed

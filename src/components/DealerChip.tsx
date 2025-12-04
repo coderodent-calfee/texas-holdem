@@ -6,7 +6,8 @@ import { Pressable } from "react-native";
 interface DealerChipProps {
   text?: string;        // multi-line text, can include \n or \\n
   size?: number;        // width & height in px
-  color?: string;       // outer rim color
+  color?: string;       // inner color
+  rim?: string;       // outer rim color
   textColor?: string;   // text color
   lineHeight?: number;
   onPress?: () => void;               // short tap
@@ -19,6 +20,7 @@ export default function DealerChip({
   size = 60,
   color = "white",
   textColor = "black",
+  rim = "black",
   lineHeight = 36,
   onPress,
   onHold,
@@ -66,7 +68,7 @@ export default function DealerChip({
     aria-label={`${text} chip`}
   >
     {/* Outer rim */}
-    <ellipse cx={center} cy={center} rx={outerRadius} ry={outerRadius} fill="black" />
+    <ellipse cx={center} cy={center} rx={outerRadius} ry={outerRadius} fill={rim} />
 
     {/* Inner white face */}
     <ellipse cx={center} cy={center} rx={innerRadius} ry={innerRadius} fill={color} />
