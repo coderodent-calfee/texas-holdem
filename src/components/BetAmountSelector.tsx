@@ -84,10 +84,11 @@ export const BetAmountSelector: React.FC<BetAmountSelectorProps> = ({
 
     return (
         <View style={{ padding: 16, backgroundColor: "#222", borderRadius: 12 }}>
-            <Text style={{ color: "white", fontSize: 18, marginBottom: 12 }}>
-                Select Bet Amount
-            </Text>
-
+            <div>
+                <Text style={{ color: "white", fontSize: 18, marginBottom: 12 }}>
+                    Select Bet Amount
+                </Text>
+            </div>     
             <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
                 {quickBets.map((qb) => (
                     <View key={qb.label} style={{ marginHorizontal: 4 }}>
@@ -234,9 +235,11 @@ export const BetAmountSelector: React.FC<BetAmountSelectorProps> = ({
                 </View>
 
             </View>
-            <Text style={{ color: "white", textAlign: "center", marginBottom: 20 }}>
-                Wager: {amount}
-            </Text>
+            <div>
+                <Text style={{ color: "white", textAlign: "center", marginBottom: 20 }}>
+                    Wager: {amount}
+                </Text>
+            </div>
 
             {/* Action Buttons */}
             <View style={{ flexDirection: "row", justifyContent: "space-between" }}>

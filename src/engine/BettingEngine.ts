@@ -50,6 +50,7 @@ export interface BettingEngineState {
     lastAggressor: string | null;
     bigBlind: number;
     roundComplete: boolean;
+    actedThisRound: Set<string>;
 }
 
 
@@ -65,6 +66,7 @@ export class BettingEngine {
             bigBlind,
 
             roundComplete: false,
+            actedThisRound: new Set<string>(),            
         };
     }
 
@@ -261,9 +263,9 @@ export class BettingEngine {
                 return false;
             }
             if ((raisePart < allowed.minRaise) && (amount < chips)) {
-console.log(
-`VALIDATION FAIL: raisePart ${raisePart} < allowed.minRaise ${allowed.minRaise} && amount ${amount} < chips ${chips} `
-);
+                console.log(
+                    `VALIDATION FAIL: raisePart ${raisePart} < allowed.minRaise ${allowed.minRaise} && amount ${amount} < chips ${chips} `
+                );
                 return false;
             }
 
@@ -294,9 +296,11 @@ console.log(
 
             case "fold":
                 player.folded = true;
+                state.actedThisRound.add(player.id);
                 return true;
 
             case "check":
+                state.actedThisRound.add(player.id);
                 return true;
 
             case "call": {
@@ -306,8 +310,8 @@ console.log(
                 player.chips -= callAmount;
                 player.committed += callAmount;
                 state.pot += callAmount;
-
                 // calling never changes lastRaise or lastAggressor
+                state.actedThisRound.add(player.id);
                 return true;
             }
 
@@ -323,6 +327,8 @@ console.log(
                 state.toCall = player.committed;
                 state.lastAggressor = player.id;
 
+                state.actedThisRound.clear();
+                state.actedThisRound.add(player.id);
                 return true;
             }
 
@@ -341,6 +347,8 @@ console.log(
                 state.toCall = player.committed;
                 state.lastAggressor = player.id;
 
+                state.actedThisRound.clear();
+                state.actedThisRound.add(player.id);
                 return true;
             }
 
@@ -350,20 +358,34 @@ console.log(
     }
 
 
-    _evaluateRoundCompletion(players: EnginePlayer[]): void {
-        const activePlayers = players.filter(p => !p.folded);
-        const allInPlayers = activePlayers.filter(p => p.chips === 0);
+_evaluateRoundCompletion(players: EnginePlayer[]): void {
+    const activePlayers = players.filter(p => !p.folded);
 
-        const needAction = activePlayers.some(p =>
-            !p.folded &&
-            p.chips > 0 &&
-            p.committed !== this.state.toCall
-        );
-
-        if (activePlayers.length <= 1 || !needAction) {
-            this.state.roundComplete = true;
-        }
+    // If only one player still active → done
+    if (activePlayers.length <= 1) {
+        this.state.roundComplete = true;
+        return;
     }
+
+    // Everyone must match toCall or be all-in
+    const everyoneMatched = activePlayers.every(
+        p => p.committed === this.state.toCall || p.chips === 0
+    );
+
+    if (!everyoneMatched) {
+        return; // cannot end yet
+    }
+
+    // Everyone who is still active must have acted this round
+    const allActed = activePlayers.every(p =>
+        this.state.actedThisRound.has(p.id)
+    );
+
+    if (allActed) {
+        this.state.roundComplete = true;
+    }
+}
+
 
     getState(): BettingEngineState {
         return { ...this.state };
@@ -373,13 +395,15 @@ console.log(
     beginNewBettingRound(players: EnginePlayer[]) {
         this.state.roundComplete = false;
         this.state.toCall = 0;
-        
+
         this.state.lastRaise = this.state.bigBlind;
         this.state.lastAggressor = null;
         // Reset per-player committed bets for this round
         players.forEach((p) => {
             p.committed = 0;
         });
+        this.state.actedThisRound = new Set<string>();
+
     }
 
     isRoundComplete(players: EnginePlayer[]): boolean {

@@ -13,9 +13,9 @@ import {
 } from "../engine/TexasHoldemEngine";
 import ChipSVG from "../components/ChipSVG";
 import ProgressBar from "../components/ProgressBar";
-import { ONE_DOLLAR_CHIP,FIVE_DOLLAR_CHIP, TEN_DOLLAR_CHIP, TWENTY_FIVE_DOLLAR_CHIP } from "../components/Chip";
+import { ONE_DOLLAR_CHIP,FIVE_DOLLAR_CHIP, TEN_DOLLAR_CHIP, TWENTY_FIVE_DOLLAR_CHIP, convertAmountToChipStacks } from "../components/Chip";
 import { seatPlayers } from "../engine/seating";
-
+import TableLayout from "../components/TableLayout"
 
 
 
@@ -34,185 +34,47 @@ const SpectatorTable: React.FC<SpectatorTableProps> = ({ store, onSelectPlayer }
   if (!players || players.length < 2) return null;
 
   const seatingMap = seatPlayers(players);
+  const betting = store.getBettingState();
+  
+  return (
+    <TableLayout
+      top={ seatingMap.top.map((p) => (
+        <View key={p.id} style={{ flex: 1, alignItems: "center" }}>
+          <PlayerDisplay player={p} onPress={() => onSelectPlayer(p.id)} /> 
+        </View>))}
 
-
-  // const seatingMap: {
-  //   top: EnginePlayer[];
-  //   bottom: EnginePlayer[];
-  //   right: EnginePlayer[];
-  //   left: EnginePlayer[];
-  // } = {
-  //   top: [],
-  //   bottom: [],
-  //   right: [],
-  //   left: []
-  // };
-
-  // if (players.length === 2) {
-  //   seatingMap["bottom"].push(players[0]);
-  //   seatingMap["top"].push(players[1]);
-  // }
-  // else if (players.length === 3) {
-  //   seatingMap["bottom"].push(players[0]);
-  //   seatingMap["top"].push(players[1]);
-  //   seatingMap["top"].push(players[2]);
-  // }
-  // else {
-    // type seatKey = keyof typeof seatingMap;
-    // const seatingCount: Record<seatKey, number> = Object.fromEntries(
-    //   Object.keys(seatingMap).map(key => [key, 0])
-    // ) as Record<seatKey, number>;
-
-    // const addOrder = Object.keys(seatingMap);
-    // const seatOrder: seatKey[] = ["bottom", "left", "top", "right"];
-
-    // let index = 0;
-    // players.forEach((_, index) => {
-    //   const seat: seatKey = addOrder[index % addOrder.length] as seatKey;
-    //   seatingCount[seat] += 1;
-    // });
-
-    // let currentRow = 0;
-    // index = 0;
-    // players.forEach((player) => {
-    //   const row: seatKey = seatOrder[currentRow] as seatKey;
-    //   seatingMap[row].push(player);
-    //   if (seatingMap[row].length >= seatingCount[row]) {
-    //     currentRow += 1;
-    //   }
-    //   index += 1;
-    // });
-  // }
-
-  // Reverse the order for clockwise display from dealer left
-  // seatingMap.bottom = seatingMap.bottom.reverse();
-  // seatingMap.left = seatingMap.left.reverse();
-    const betting = store.getBettingState();
-    return (
-    <View style={styles.container}>
-
-
-      <View style={styles.oval} />
-
-
-      <View
-        style={styles.content}
-      >
-        {/* --- Left column: left players top-to-bottom --- */}
-        <View
-          style={{
-            flexDirection: "column",
-            justifyContent: "center",
-          }}
-        >
-          {seatingMap.left.map((p) => (
-            <PlayerDisplay
-              key={p.id}
-              player={p}
-              onPress={() => onSelectPlayer(p.id)}
-            />
-          ))}
-        </View>
-
-        {/* --- Middle column: top row, center (pot + community), bottom row --- */}
-        <View
-          style={{
-            flex: 1,
-            flexDirection: "column",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          {/* Top row */}
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "center",
-              width: "100%",
-              gap: 2,
-            }}
-          >
-            {seatingMap.top.map((p) => (
-              <View key={p.id} style={{ flex: 1, alignItems: "center" }}>
-                <PlayerDisplay
-                  player={p}
-                  onPress={() => onSelectPlayer(p.id)}
-                />
-              </View>
+      bottom={ seatingMap.bottom.map((p) => (
+        <View key={p.id} style={{ flex: 1, alignItems: "center" }}>
+          <PlayerDisplay player={p} onPress={() => onSelectPlayer(p.id)} /> 
+        </View>))}
+      
+      left={seatingMap.left.map((p) => (
+        <PlayerDisplay key={p.id} player={p} onPress={() => onSelectPlayer(p.id)} />
+      ))}
+      
+      right={seatingMap.right.map((p) => (
+        <PlayerDisplay key={p.id} player={p} onPress={() => onSelectPlayer(p.id)} />
+      ))}
+      
+      center={
+        <View style={{ alignItems: "center", minHeight: 154, }}>
+          <ChipSVG 
+            size={100}
+            stacks={convertAmountToChipStacks(betting.pot)} />
+          <>
+            <Text style={{ fontSize: 20, fontWeight: "bold" }}>Spectator Table Pot: {betting.pot}</Text>
+          </>
+          <>
+            <Text>Live Bet: {betting.toCall}</Text>
+          </>          
+          <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>
+            {communityCards.map((c) => (
+            <Card key={c} code={c} width={70} height={100} />
             ))}
           </View>
-
-          {/* Center: pot & community cards */}
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "center",
-              width: "100%",
-              paddingHorizontal: 10,
-            }}
-          >
-
-            <View style={{
-              alignItems: "center",
-              minHeight: 154,
-            }}>
-              <Text style={{ fontSize: 20, fontWeight: "bold" }}>Spectator Table Pot: {betting.pot}</Text>
-              <Text>Live Bet: {betting.toCall}</Text>
-              <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>
-                {communityCards.map((c) => (
-                  <Card key={c} code={c} width={70} height={100} />
-                ))}
-                <ChipSVG size={150}
-                  stacks={[
-                    { chipCount: 1, ...TWENTY_FIVE_DOLLAR_CHIP }, 
-                    { chipCount: 15, ...TEN_DOLLAR_CHIP }, // blue $10 #283371 #016EB1
-                    { chipCount: 25, ...FIVE_DOLLAR_CHIP }, // red : $5
-                    { chipCount: 5, ...ONE_DOLLAR_CHIP }, // white $1
-                  ]}
-                ></ChipSVG>
-              </View>
-            </View>
-
-          </View>
-          {/* Bottom row */}
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "center",
-              width: "100%",
-              paddingHorizontal: 10,
-            }}
-          >
-            {seatingMap.bottom.map((p) => (
-              <View key={p.id} style={{ flex: 1, alignItems: "center" }}>
-                <PlayerDisplay
-                  player={p}
-                  onPress={() => onSelectPlayer(p.id)}
-                />
-              </View>
-            ))}
-          </View>
-        </View>
-
-        {/* --- Right column: right players top-to-bottom --- */}
-        <View
-          style={{
-            flexDirection: "column",
-            justifyContent: "center",
-            gap: 10,
-          }}
-        >
-          {seatingMap.right.map((p, i) => (
-            <PlayerDisplay
-              key={p.id}
-              player={p}
-              onPress={() => onSelectPlayer(p.id)}
-            />
-          ))}
-        </View>
-      </View>
-    </View>
-
+        </View>          
+      }
+    />
   );
 };
 
@@ -260,14 +122,126 @@ const styles = StyleSheet.create({
 
 });
 
-/*
+    // <View style={styles.container}>
 
-41 pixels high for 120 chips  at size 20
 
- aspect 0.45 chipHeight 9 count 120 stackSpacing 3 totalStackHeight 366
+    //   <View style={styles.oval} />
 
- individual chip height should be 0.341
 
-one chip at 200 is 50 pixels
+    //   <View
+    //     style={styles.content}
+    //   >
+    //     {/* --- Left column: left players top-to-bottom --- */}
+    //     <View
+    //       style={{
+    //         flexDirection: "column",
+    //         justifyContent: "center",
+    //       }}
+    //     >
+    //       {seatingMap.left.map((p) => (
+    //         <PlayerDisplay
+    //           key={p.id}
+    //           player={p}
+    //           onPress={() => onSelectPlayer(p.id)}
+    //         />
+    //       ))}
+    //     </View>
 
-*/
+    //     {/* --- Middle column: top row, center (pot + community), bottom row --- */}
+    //     <View
+    //       style={{
+    //         flex: 1,
+    //         flexDirection: "column",
+    //         justifyContent: "space-between",
+    //         alignItems: "center",
+    //       }}
+    //     >
+    //       {/* Top row */}
+          // <View
+          //   style={{
+          //     flexDirection: "row",
+          //     justifyContent: "center",
+          //     width: "100%",
+          //     gap: 2,
+          //   }}
+          // >
+            // {seatingMap.top.map((p) => (
+            //   <View key={p.id} style={{ flex: 1, alignItems: "center" }}>
+            //     <PlayerDisplay
+            //       player={p}
+            //       onPress={() => onSelectPlayer(p.id)}
+            //     />
+            //   </View>
+            // ))}
+          // </View>
+
+    //       {/* Center: pot & community cards */}
+    //       <View
+    //         style={{
+    //           flexDirection: "row",
+    //           justifyContent: "center",
+    //           width: "100%",
+    //           paddingHorizontal: 10,
+    //         }}
+    //       >
+
+    //         <View style={{
+    //           alignItems: "center",
+    //           minHeight: 154,
+    //         }}>
+    //           <Text style={{ fontSize: 20, fontWeight: "bold" }}>Spectator Table Pot: {betting.pot}</Text>
+    //           <Text>Live Bet: {betting.toCall}</Text>
+    //           <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>
+    //             {communityCards.map((c) => (
+    //               <Card key={c} code={c} width={70} height={100} />
+    //             ))}
+    //             <ChipSVG size={150}
+    //               stacks={[
+    //                 { chipCount: 1, ...TWENTY_FIVE_DOLLAR_CHIP }, 
+    //                 { chipCount: 15, ...TEN_DOLLAR_CHIP }, // blue $10 #283371 #016EB1
+    //                 { chipCount: 25, ...FIVE_DOLLAR_CHIP }, // red : $5
+    //                 { chipCount: 5, ...ONE_DOLLAR_CHIP }, // white $1
+    //               ]}
+    //             ></ChipSVG>
+    //           </View>
+    //         </View>
+
+    //       </View>
+    //       {/* Bottom row */}
+    //       <View
+    //         style={{
+    //           flexDirection: "row",
+    //           justifyContent: "center",
+    //           width: "100%",
+    //           paddingHorizontal: 10,
+    //         }}
+    //       >
+    //         {seatingMap.bottom.map((p) => (
+    //           <View key={p.id} style={{ flex: 1, alignItems: "center" }}>
+    //             <PlayerDisplay
+    //               player={p}
+    //               onPress={() => onSelectPlayer(p.id)}
+    //             />
+    //           </View>
+    //         ))}
+    //       </View>
+    //     </View>
+
+    //     {/* --- Right column: right players top-to-bottom --- */}
+    //     <View
+    //       style={{
+    //         flexDirection: "column",
+    //         justifyContent: "center",
+    //         gap: 10,
+    //       }}
+    //     >
+    //       {seatingMap.right.map((p, i) => (
+    //         <PlayerDisplay
+    //           key={p.id}
+    //           player={p}
+    //           onPress={() => onSelectPlayer(p.id)}
+    //         />
+    //       ))}
+    //     </View>
+    //   </View>
+    // </View>

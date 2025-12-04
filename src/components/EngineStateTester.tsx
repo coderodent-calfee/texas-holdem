@@ -26,9 +26,11 @@ export default function EngineStateTester({ engineState, onAdvanceEngine }: Prop
 
   return (
     <View style={{ padding: 20 }}>
-      <Text style={{ fontSize: 20, marginBottom: 10 }}>
-        {capitalize(engineState)}
-      </Text>
+      <div>
+        <Text style={{ fontSize: 20, marginBottom: 10 }}>
+          {capitalize(engineState)}
+        </Text>
+      </div>
 
       <Button
         title={`Advance to ${capitalize(nextEngineState)}`}

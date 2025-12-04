@@ -105,9 +105,11 @@ export default function SpectatorTableWrapper({ onSelectPlayer }: Props) {
         }}
       >
         <Button title="−" onPress={() => decreasePlayerCount()} />
-        <Text style={{ alignSelf: "center", marginHorizontal: 10 }}>
-          {store.getPlayers().length} players
-        </Text>
+        <>
+          <Text style={{ alignSelf: "center", marginHorizontal: 10 }}>
+            {store.getPlayers().length} players
+          </Text>
+        </>
         <Button title="+" onPress={() => increasePlayerCount()} />
       </View>
 
@@ -115,9 +117,11 @@ export default function SpectatorTableWrapper({ onSelectPlayer }: Props) {
       <View style={{ flexDirection: "row", justifyContent: "space-evenly", marginBottom: 10 }}>
         <Button title={store.getEngineState() === "Blinds & Ante" ? "Next Dealer" : "Next Player"}
           onPress={handleNextPlayer} />
-                <Text style={{ alignSelf: "center", marginHorizontal: 10 }}>
-          {`${mode} ${isSpectator()?"":currentPlayer.name}`}
-        </Text>
+          <>
+            <Text style={{ alignSelf: "center", marginHorizontal: 10 }}>
+              {`${mode} ${isSpectator()?"":currentPlayer.name}`}
+            </Text>
+          </>
         <EngineStateTester
           engineState={store.getEngineState()}
           onAdvanceEngine={() => { advanceEngine() }}

@@ -56,8 +56,12 @@ const PlayerDisplayComponent = ({
         </View>
 
         <View style={{ flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-          <Text style={{ fontWeight: "bold" }}>{player.name}</Text>
-          <Text>{player.chips} chips</Text>
+          <>
+            <Text style={{ fontWeight: "bold" }}>{player.name}</Text>
+          </>
+          <>
+            <Text>{player.chips} chips</Text>
+          </>
 
           {player.isDealer && <DealerChip />}
           {player.isBigBlind && <DealerChip color={"#EDDE02"} text="BIG\nBLIND" />}
@@ -76,7 +80,7 @@ const PlayerDisplayComponent = ({
         </View>
 
         <View style={{ flexDirection: "column", alignItems: "center", gap: 2 }}>
-          {isActive &&
+          {isActive && isSelf &&
             allowedMoves &&
             Object.entries(allowedMoves).map(([key, value]) => {
               if (typeof value !== "boolean" || !value) return null;
