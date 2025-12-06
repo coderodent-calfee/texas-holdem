@@ -56,12 +56,8 @@ const PlayerDisplayComponent = ({
         </View>
 
         <View style={{ flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-          <>
-            <Text style={{ fontWeight: "bold" }}>{player.name}</Text>
-          </>
-          <>
-            <Text>{player.chips} chips</Text>
-          </>
+          <Text style={{ fontWeight: "bold" }}>{player.name}</Text>
+          <Text>{player.chips} chips</Text>
 
           {player.isDealer && <DealerChip />}
           {player.isBigBlind && <DealerChip color={"#EDDE02"} text="BIG\nBLIND" />}
@@ -81,22 +77,45 @@ const PlayerDisplayComponent = ({
 
         <View style={{ flexDirection: "column", alignItems: "center", gap: 2 }}>
           {isActive && isSelf &&
-            allowedMoves &&
-            Object.entries(allowedMoves).map(([key, value]) => {
-              if (typeof value !== "boolean" || !value) return null;
+            allowedMoves && (
+              <>
+                {allowedMoves.canPaySmallBlind && (
+                  <Button
+                    title="Post Small Blind"
+                    onPress={() => handlePlayerAction?.("pay-small-blind")}
+                  />
+                )}
 
-              const label = key.replace(/^can/, "").replace(/^./, (c) => c.toUpperCase());
+                {allowedMoves.canPayBigBlind && (
+                  <Button
+                    title="Post Big Blind"
+                    onPress={() => handlePlayerAction?.("pay-big-blind")}
+                  />
+                )}
 
-              return (
-                <Button
-                  key={key}
-                  title={label}
-                  onPress={() =>
-                    handlePlayerAction?.(label.toLowerCase() as PlayerAction)
+                {Object.entries(allowedMoves).map(([key, value]) => {
+                  if (
+                    key === "canPaySmallBlind" ||
+                    key === "canPayBigBlind"
+                  ) {
+                    return null;
                   }
-                />
-              );
-            })}
+                  if (typeof value !== "boolean" || !value) return null;
+
+                  const label = key.replace(/^can/, "").replace(/^./, (c) => c.toUpperCase());
+
+                  return (
+                    <Button
+                      key={key}
+                      title={label}
+                      onPress={() =>
+                        handlePlayerAction?.(label.toLowerCase() as PlayerAction)
+                      }
+                    />
+                  );
+                })}
+              </>
+            )}
         </View>
       </View>
     </Pressable>

@@ -8,8 +8,18 @@ export const BETTING_ACTIONS = [
     "raise",
     "fold",
 ] as const;
+export type BettingAction = (typeof BETTING_ACTIONS)[number];
 
-export type PlayerAction = (typeof BETTING_ACTIONS)[number];
+export const SPECIAL_ACTIONS = [
+  "pay-small-blind",
+  "pay-big-blind"
+] as const;
+export type SpecialAction = (typeof SPECIAL_ACTIONS)[number];
+
+export type PlayerAction =
+  | BettingAction
+  | SpecialAction;
+
 // (bettingMode === "bet")?{allowedMoves?.minBet ?? 0} :{allowedMoves?.minBet ?? 0}
 export interface AllowedActions {
     canFold: boolean;
@@ -26,6 +36,8 @@ export interface AllowedActions {
 
     // helper: Is player allowed to go all-in (always true unless already all-in)
     canAllIn: boolean;
+  canPaySmallBlind?: boolean;
+  canPayBigBlind?: boolean;    
 }
 
 export const noActions: AllowedActions = {
