@@ -11,14 +11,14 @@ export const BETTING_ACTIONS = [
 export type BettingAction = (typeof BETTING_ACTIONS)[number];
 
 export const SPECIAL_ACTIONS = [
-  "pay-small-blind",
-  "pay-big-blind"
+    "pay-small-blind",
+    "pay-big-blind"
 ] as const;
 export type SpecialAction = (typeof SPECIAL_ACTIONS)[number];
 
 export type PlayerAction =
-  | BettingAction
-  | SpecialAction;
+    | BettingAction
+    | SpecialAction;
 
 // (bettingMode === "bet")?{allowedMoves?.minBet ?? 0} :{allowedMoves?.minBet ?? 0}
 export interface AllowedActions {
@@ -36,8 +36,8 @@ export interface AllowedActions {
 
     // helper: Is player allowed to go all-in (always true unless already all-in)
     canAllIn: boolean;
-  canPaySmallBlind?: boolean;
-  canPayBigBlind?: boolean;    
+    canPaySmallBlind?: boolean;
+    canPayBigBlind?: boolean;
 }
 
 export const noActions: AllowedActions = {
@@ -78,7 +78,7 @@ export class BettingEngine {
             bigBlind,
 
             roundComplete: false,
-            actedThisRound: new Set<string>(),            
+            actedThisRound: new Set<string>(),
         };
     }
 
@@ -369,34 +369,74 @@ export class BettingEngine {
         }
     }
 
+    applyPlayerSpecialAction(player: EnginePlayer | null, action: SpecialAction, amount?: number): boolean {
+        if (!player) return false;
 
-_evaluateRoundCompletion(players: EnginePlayer[]): void {
-    const activePlayers = players.filter(p => !p.folded);
+        if(player.isBigBlind && action !== "pay-big-blind"){
+            return false;
+        }
+        if(player.isSmallBlind && action !== "pay-small-blind"){
+            return false;
+        }
+        const state = this.state;
 
-    // If only one player still active → done
-    if (activePlayers.length <= 1) {
-        this.state.roundComplete = true;
-        return;
+        if(state.actedThisRound.has(player.id)){
+            return false;
+        }
+
+        switch (action) {
+            case "pay-small-blind": {
+                const amountNeeded = state.bigBlind / 2;
+                const blind = Math.min(player.chips, amountNeeded);
+
+                player.chips -= blind;
+                player.committed += blind;
+                state.pot += blind;
+                state.actedThisRound.add(player.id);
+                return true;
+            }
+            case "pay-big-blind": {
+                const amountNeeded = state.bigBlind;
+                const blind = Math.min(player.chips, amountNeeded);
+
+                player.chips -= blind;
+                player.committed += blind;
+                state.pot += blind;
+                state.actedThisRound.add(player.id);
+                return true;
+            }
+            default:
+                return false;
+        }
     }
 
-    // Everyone must match toCall or be all-in
-    const everyoneMatched = activePlayers.every(
-        p => p.committed === this.state.toCall || p.chips === 0
-    );
+    _evaluateRoundCompletion(players: EnginePlayer[]): void {
+        const activePlayers = players.filter(p => !p.folded);
 
-    if (!everyoneMatched) {
-        return; // cannot end yet
+        // If only one player still active → done
+        if (activePlayers.length <= 1) {
+            this.state.roundComplete = true;
+            return;
+        }
+
+        // Everyone must match toCall or be all-in
+        const everyoneMatched = activePlayers.every(
+            p => p.committed === this.state.toCall || p.chips === 0
+        );
+
+        if (!everyoneMatched) {
+            return; // cannot end yet
+        }
+
+        // Everyone who is still active must have acted this round
+        const allActed = activePlayers.every(p =>
+            this.state.actedThisRound.has(p.id)
+        );
+
+        if (allActed) {
+            this.state.roundComplete = true;
+        }
     }
-
-    // Everyone who is still active must have acted this round
-    const allActed = activePlayers.every(p =>
-        this.state.actedThisRound.has(p.id)
-    );
-
-    if (allActed) {
-        this.state.roundComplete = true;
-    }
-}
 
 
     getState(): BettingEngineState {

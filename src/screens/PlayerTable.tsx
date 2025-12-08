@@ -15,7 +15,7 @@ import {
 import ChipSVG from "../components/ChipSVG";
 import ProgressBar from "../components/ProgressBar";
 import { BetAmountSelector } from "../components/BetAmountSelector";
-import { noActions, PlayerAction } from "../engine/BettingEngine";
+import { noActions, PlayerAction, SPECIAL_ACTIONS, SpecialAction } from "../engine/BettingEngine";
 import { convertAmountToChipStacks } from "../components/Chip";
 import { seatPlayers } from "../engine/seating";
 import TableLayout from "../components/TableLayout";
@@ -52,22 +52,31 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, displa
       player.holeCards = holeCards;
     }
   }
-  const canAct = (id: string): boolean => {
-    return isSelf && store.getCurrentPlayer()?.id === id;
-  };
+  // const canAct = (id: string): boolean => {
+  //   return isSelf && store.getCurrentPlayer()?.id === id;
+  // };
 
 
   const seatingMap = seatPlayers(players);
 
-  const allowedMoves = canAct(player.id) ? store.getAllowedActions() : noActions;
+  const allowedMoves = store.getAllowedActions(player.id);
 
   const betting = store.getBettingState();
 
-  if (canAct(player.id)) { console.log(`Player:${player.name} allowed moves:`, allowedMoves, ' bet ', betting); }
+  console.log(`Player:${player.name} allowed moves:`, allowedMoves, ' bet ', betting);
 
   const handlePlayerAction = (action: PlayerAction) => {
-      console.log(`Action '${action}' for ${store.getCurrentPlayer()?.name} `);
+    if (SPECIAL_ACTIONS.includes(action as SpecialAction)) {
+      const blind = players.find(p =>
+        (p.isBigBlind && (action === 'pay-big-blind')) ||
+        (p.isSmallBlind && (action === 'pay-small-blind')));
+        if(blind){
+          console.log(`Action '${action}' for ${blind?.name} `);
 
+        }
+        return;
+    }
+    console.log(`Action '${action}' for ${store.getCurrentPlayer()?.name} `);
     // Bet or raise opens BetAmountSelector
     if (action === "bet" || action === "raise") {
       setBettingMode(action);
@@ -119,8 +128,12 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, displa
         </View>))}
 
       bottom={seatingMap.bottom.map((p) => {
-        const isActive = p.id === store.getCurrentPlayer()?.id;
-        const allowedMoves = !bettingMode && isSelf && isActive ? store.getAllowedActions() : noActions;
+        const allowedMoves =
+
+          !bettingMode &&  // I pressed bet or raise already, and the betting amount thing is open
+            isSelf // drawing a not 'me' window
+            ?
+            store.getAllowedActions(p.id) : noActions;
         return (
           <View key={p.id} style={{ flex: 1, alignItems: "center" }}>
             <PlayerDisplay

@@ -76,23 +76,27 @@ const PlayerDisplayComponent = ({
         </View>
 
         <View style={{ flexDirection: "column", alignItems: "center", gap: 2 }}>
-          {isActive && isSelf &&
+          {isSelf &&
             allowedMoves && (
               <>
                 {allowedMoves.canPaySmallBlind && (
                   <Button
-                    title="Post Small Blind"
+                    title="Post Blind"
                     onPress={() => handlePlayerAction?.("pay-small-blind")}
                   />
                 )}
 
                 {allowedMoves.canPayBigBlind && (
                   <Button
-                    title="Post Big Blind"
+                    title="Post Blind"
                     onPress={() => handlePlayerAction?.("pay-big-blind")}
                   />
                 )}
-
+              </>
+            )}
+          {isActive && isSelf &&
+            allowedMoves && (
+              <>
                 {Object.entries(allowedMoves).map(([key, value]) => {
                   if (
                     key === "canPaySmallBlind" ||
@@ -115,7 +119,7 @@ const PlayerDisplayComponent = ({
                   );
                 })}
               </>
-            )}
+            )}            
         </View>
       </View>
     </Pressable>

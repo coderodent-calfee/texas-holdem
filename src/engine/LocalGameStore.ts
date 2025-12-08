@@ -82,12 +82,22 @@ export class LocalGameStore {
     return this.bettingEngine.getState();
   }
 
-  getAllowedActions(): AllowedActions {
-    const engineState = this.gameEngine.getPublicState();
+  getAllowedActions(id: string): AllowedActions {
+    const engineState = this.getPublicState();
     const players = engineState.players;
     const state = engineState.state;
     if (state === "Blinds & Ante") {
+      const player = players.find(p => p.id === id);
+      const actedThisRound = this.getBettingState().actedThisRound;
+      if (player && !actedThisRound.has(player.id)) {
+        return {
+          ...noActions,
+          canPaySmallBlind: player.isSmallBlind,
+          canPayBigBlind: player.isBigBlind,
+        };
+      }
       return noActions;
+
     }
     if (state === "reveal") {
       return noActions;
@@ -96,24 +106,40 @@ export class LocalGameStore {
     if (!currentPlayer) {
       return noActions;
     }
+    if (id !== currentPlayer.id) {
+      return noActions;
+    }
     return this.bettingEngine.getAllowedActions(currentPlayer);
   }
 
   applyPlayerAction(action: PlayerAction, amount?: number): boolean {
     const ok = this.bettingEngine.applyPlayerAction(this.getCurrentPlayer(), action, amount);
-    if(ok){
-      if( this.bettingEngine.isRoundComplete(  this.getPlayers() ) ){
+    if (ok) {
+      if (this.bettingEngine.isRoundComplete(this.getPlayers())) {
         this.step();
         this.startBettingRound();
       }
-      else{
+      else {
         const engineState = this.gameEngine.getPublicState();
         this.currentPlayerIndex = this.getNextActivePlayerIndex(engineState.players, this.currentPlayerIndex!);
       }
     }
     return ok;
   }
-
+  applyPlayerSpecialAction(id:string, action: PlayerAction): boolean {
+    const ok = this.bettingEngine.applyPlayerSpecialAction(this.getCurrentPlayer(), action);
+    if (ok) {
+      if (this.bettingEngine.isRoundComplete(this.getPlayers())) {
+        this.step();
+        this.startBettingRound();
+      }
+      else {
+        const engineState = this.gameEngine.getPublicState();
+        this.currentPlayerIndex = this.getNextActivePlayerIndex(engineState.players, this.currentPlayerIndex!);
+      }
+    }
+    return ok;
+  }
   getPublicState(): EnginePublicState {
     const engineState = this.gameEngine.getPublicState();
 

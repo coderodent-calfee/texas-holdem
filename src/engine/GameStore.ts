@@ -4,7 +4,7 @@ import { AllowedActions, BettingEngineState, PlayerAction } from "./BettingEngin
 
 export interface GameStore {
   getCurrentPlayer(): EnginePlayer | null;
-  getAllowedActions(): AllowedActions;
+  getAllowedActions(id : string): AllowedActions;
   applyPlayerAction( action: PlayerAction, amount?: number):boolean;
   getBettingState(): BettingEngineState;
   // Accessors
