@@ -1,11 +1,12 @@
 import type { EngineState, EnginePlayer, EnginePublicState } from "../engine/TexasHoldemEngine";
 import type { CardCode } from "../engine/cards";
-import { AllowedActions, BettingEngineState, PlayerAction } from "./BettingEngine";
+import { AllowedActions, BettingEngineState, PlayerAction, SpecialAction } from "./BettingEngine";
 
 export interface GameStore {
   getCurrentPlayer(): EnginePlayer | null;
   getAllowedActions(id : string): AllowedActions;
   applyPlayerAction( action: PlayerAction, amount?: number):boolean;
+  applyPlayerSpecialAction(id:string, action: SpecialAction): boolean ;
   getBettingState(): BettingEngineState;
   // Accessors
   getEngineState(): EngineState;

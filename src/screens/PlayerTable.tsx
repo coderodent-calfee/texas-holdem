@@ -67,14 +67,26 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, displa
 
   const handlePlayerAction = (action: PlayerAction) => {
     if (SPECIAL_ACTIONS.includes(action as SpecialAction)) {
-      const blind = players.find(p =>
-        (p.isBigBlind && (action === 'pay-big-blind')) ||
-        (p.isSmallBlind && (action === 'pay-small-blind')));
-        if(blind){
+      Promise.resolve()
+        .then(() => {
+          const blind = players.find(p =>
+            (p.isBigBlind && (action === 'pay-big-blind')) ||
+            (p.isSmallBlind && (action === 'pay-small-blind')));
+          if (!blind) 
+          {
+            throw new Error("no player to ${action}");
+          }
           console.log(`Action '${action}' for ${blind?.name} `);
-
-        }
-        return;
+          const ok = store.applyPlayerSpecialAction(blind.id, action as SpecialAction);
+          if (!ok) { throw new Error("unable to ${action}"); }
+        })
+        .then(() => {
+          //TODO:
+          console.log(`Action '${action}' applied successfully; need to check if both blinds paid and move to next step`);
+        })
+        .catch((err) => {
+          console.log(`Action '${action}' failed:`, err);
+        });
     }
     console.log(`Action '${action}' for ${store.getCurrentPlayer()?.name} `);
     // Bet or raise opens BetAmountSelector
@@ -157,17 +169,18 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, displa
       ))}
 
       center={
-        (bettingMode === "bet" || bettingMode === "raise") ? (
-          <View>
-            <BetAmountSelector
-              allowed={allowedMoves}
-              mode={bettingMode}
-              stack={player.chips}
-              onConfirm={handleBetConfirm}
-              onCancel={handleBetCancel}
-            />
-          </View>
-        ) :
+        (bettingMode === "bet" || bettingMode === "raise") ?
+          (
+            <View>
+              <BetAmountSelector
+                allowed={allowedMoves}
+                mode={bettingMode}
+                stack={player.chips}
+                onConfirm={handleBetConfirm}
+                onCancel={handleBetCancel}
+              />
+            </View>
+          ) :
           (
             <View style={{
               alignItems: "center",
@@ -184,10 +197,10 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, displa
                 ))}
               </View>
             </View>
-          )}
+          )
+      }
     />
   );
-
 };
 
 export default PlayerTable;

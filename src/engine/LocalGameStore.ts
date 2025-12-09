@@ -15,7 +15,7 @@ import { CardCode, generateDeck, shuffle, BACK } from "../engine/cards"; // adju
 import { fakeGame } from "../data/fakeGame";
 import { fakePlayers } from "../data/fakePlayers";
 import type { Player } from "../types/Player";
-import { AllowedActions, BettingEngine, BettingEngineState, noActions, PlayerAction } from "./BettingEngine";
+import { AllowedActions, BettingEngine, BettingEngineState, noActions, PlayerAction, SpecialAction } from "./BettingEngine";
 
 const enginePlayers: EnginePlayer[] =
   fakePlayers.map((p, index) => {
@@ -126,9 +126,10 @@ export class LocalGameStore {
     }
     return ok;
   }
-  applyPlayerSpecialAction(id:string, action: PlayerAction): boolean {
+  applyPlayerSpecialAction(id:string, action: SpecialAction): boolean {
     const ok = this.bettingEngine.applyPlayerSpecialAction(this.getCurrentPlayer(), action);
     if (ok) {
+      // just need to checkl i blinds and ante are paid
       if (this.bettingEngine.isRoundComplete(this.getPlayers())) {
         this.step();
         this.startBettingRound();
