@@ -126,18 +126,19 @@ export class LocalGameStore {
     }
     return ok;
   }
-  applyPlayerSpecialAction(id:string, action: SpecialAction): boolean {
-    const ok = this.bettingEngine.applyPlayerSpecialAction(this.getCurrentPlayer(), action);
-    if (ok) {
-      // just need to checkl i blinds and ante are paid
-      if (this.bettingEngine.isRoundComplete(this.getPlayers())) {
-        this.step();
-        this.startBettingRound();
-      }
-      else {
-        const engineState = this.gameEngine.getPublicState();
-        this.currentPlayerIndex = this.getNextActivePlayerIndex(engineState.players, this.currentPlayerIndex!);
-      }
+  applyPlayerSpecialAction(id: string, action: SpecialAction): boolean {
+
+    const engineState = this.gameEngine.getPublicState();
+    const player = engineState.players.find(p => p.id === id) || null;
+
+    const ok = this.bettingEngine.applyPlayerSpecialAction(player, action);
+    const beforeDeal = engineState.state === "Blinds & Ante";
+    const blindsPlayers = engineState.players.filter(p => p.isBigBlind || p.isSmallBlind);
+    const acted = this.bettingEngine.getState().actedThisRound;
+
+    if (ok && beforeDeal && blindsPlayers.length === 2 && acted.has(blindsPlayers[0].id) && acted.has(blindsPlayers[1].id)) {
+      this.step();
+      this.startBettingRound();
     }
     return ok;
   }
@@ -147,12 +148,11 @@ export class LocalGameStore {
     const players = engineState.players;
     const dealerIndex = players.findIndex(p => p.id === engineState.dealerId);
 
-    // Compute small and big blind indices, wrapping around
+    //TODO: In two-player (heads-up) Texas Hold'em, the player with the dealer button posts the Small Blind (SB), and the other player posts the Big Blind (BB)
     const smallBlindIndex = dealerIndex >= 0 ? (dealerIndex + 1) % players.length : -1;
     const bigBlindIndex = dealerIndex >= 0 ? (dealerIndex + 2) % players.length : -1;
 
     const beforeDeal = engineState.state === "Blinds & Ante";
-
     if (engineState.state !== "reveal") {
       const publicPlayers: EnginePlayer[] = players.map((p, i) => ({
         ...p,

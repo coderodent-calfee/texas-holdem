@@ -370,17 +370,24 @@ export class BettingEngine {
     }
 
     applyPlayerSpecialAction(player: EnginePlayer | null, action: SpecialAction, amount?: number): boolean {
-        if (!player) return false;
-
-        if(player.isBigBlind && action !== "pay-big-blind"){
+        if (!player) {
+            console.log("applyPlayerSpecialAction no player");
             return false;
         }
-        if(player.isSmallBlind && action !== "pay-small-blind"){
+        console.log(`applyPlayerSpecialAction ${player.name} `, player);
+
+        if((player.isBigBlind) === (action !== "pay-big-blind")){
+            console.log(`applyPlayerSpecialAction ${action} player is not big blind`);
+            return false;
+        }
+        if((player.isSmallBlind) === (action !== "pay-small-blind")){
+            console.log(`applyPlayerSpecialAction ${action} player is not small blind`);
             return false;
         }
         const state = this.state;
 
         if(state.actedThisRound.has(player.id)){
+            console.log(`applyPlayerSpecialAction ${action} player has acted`);
             return false;
         }
 

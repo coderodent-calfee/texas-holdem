@@ -29,6 +29,9 @@ interface PlayerTableProps {
 const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, displayedPlayerId }) => {
   const [bettingMode, setBettingMode] = useState<PlayerAction | null>(null);
   const [currentPlayerId, setcurrentPlayerId] = useState(store.getCurrentPlayer()?.id);
+  // --- Re-render trigger ---
+  const [, forceRender] = useState(0);
+  const refresh = () => forceRender(x => x + 1);
 
   const { state,
     players: playersArg,
@@ -63,7 +66,8 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, displa
 
   const betting = store.getBettingState();
 
-  console.log(`Player:${player.name} allowed moves:`, allowedMoves, ' bet ', betting);
+  console.log(`Player:${player.name} allowed moves:`, allowedMoves);
+  console.log(`Player:${player.name} betting state: `, betting);
 
   const handlePlayerAction = (action: PlayerAction) => {
     if (SPECIAL_ACTIONS.includes(action as SpecialAction)) {
@@ -77,16 +81,16 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, displa
             throw new Error("no player to ${action}");
           }
           console.log(`Action '${action}' for ${blind?.name} `);
-          const ok = store.applyPlayerSpecialAction(blind.id, action as SpecialAction);
-          if (!ok) { throw new Error("unable to ${action}"); }
+          store.applyPlayerSpecialAction(blind.id, action as SpecialAction);
         })
         .then(() => {
-          //TODO:
           console.log(`Action '${action}' applied successfully; need to check if both blinds paid and move to next step`);
+          refresh();
         })
         .catch((err) => {
           console.log(`Action '${action}' failed:`, err);
         });
+      return;
     }
     console.log(`Action '${action}' for ${store.getCurrentPlayer()?.name} `);
     // Bet or raise opens BetAmountSelector
