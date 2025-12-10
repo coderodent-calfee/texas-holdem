@@ -1,17 +1,19 @@
-import React from 'react';
-import { CardCode, cardSvgs } from '../engine/cards';
+import React from "react";
+import Card from "./Card";
+import FlashingWrapper from "./FlashingWrapper";
 
-interface CardProps {
-  code: CardCode;
+interface FlashingCardProps {
+  code: string; // unique id for the card
   width?: number | string;
   height?: number | string;
 }
 
-const Card: React.FC<CardProps> = ({ code, width = 80, height = 120 }) => {
-  const CardComponent = cardSvgs[code];
-  if (!CardComponent) return null;
-
-  return <CardComponent width={width} height={height} />;
+const FlashingCard: React.FC<FlashingCardProps> = ({ code, width, height }) => {
+  return (
+    <FlashingWrapper id={code}>
+      <Card code={code} width={width} height={height} />
+    </FlashingWrapper>
+  );
 };
 
-export default Card;
+export default FlashingCard;
