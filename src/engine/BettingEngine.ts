@@ -295,7 +295,6 @@ export class BettingEngine {
         return false;
     }
 
-
     applyPlayerAction(player: EnginePlayer | null, action: PlayerAction, amount?: number): boolean {
         if (!player) return false;
         if (!this._validatePlayerAction(player, action, amount)) return false;
@@ -369,52 +368,48 @@ export class BettingEngine {
         }
     }
 
-    applyPlayerSpecialAction(player: EnginePlayer | null, action: SpecialAction, amount?: number): boolean {
+    applyPlayerSpecialAction(player: EnginePlayer | undefined, action: SpecialAction): boolean {
         if (!player) {
             console.log("applyPlayerSpecialAction no player");
             return false;
         }
         console.log(`applyPlayerSpecialAction ${player.name} `, player);
 
-        if((player.isBigBlind) === (action !== "pay-big-blind")){
+        if ((player.isBigBlind) === (action !== "pay-big-blind")) {
             console.log(`applyPlayerSpecialAction ${action} player is not big blind`);
             return false;
         }
-        if((player.isSmallBlind) === (action !== "pay-small-blind")){
+        if ((player.isSmallBlind) === (action !== "pay-small-blind")) {
             console.log(`applyPlayerSpecialAction ${action} player is not small blind`);
             return false;
         }
         const state = this.state;
 
-        if(state.actedThisRound.has(player.id)){
+        if (state.actedThisRound.has(player.id)) {
             console.log(`applyPlayerSpecialAction ${action} player has acted`);
             return false;
         }
-
+        let blindAmount = 0;
         switch (action) {
-            case "pay-small-blind": {
-                const amountNeeded = state.bigBlind / 2;
-                const blind = Math.min(player.chips, amountNeeded);
-
-                player.chips -= blind;
-                player.committed += blind;
-                state.pot += blind;
-                state.actedThisRound.add(player.id);
-                return true;
-            }
-            case "pay-big-blind": {
-                const amountNeeded = state.bigBlind;
-                const blind = Math.min(player.chips, amountNeeded);
-
-                player.chips -= blind;
-                player.committed += blind;
-                state.pot += blind;
-                state.actedThisRound.add(player.id);
-                return true;
-            }
+            case "pay-small-blind":
+                blindAmount = Math.min(player.chips, state.bigBlind / 2);
+                break;
+            case "pay-big-blind":
+                blindAmount = Math.min(player.chips, state.bigBlind / 2);
+                break;
             default:
                 return false;
         }
+        player.chips -= blindAmount;
+        player.committed += blindAmount;
+        state.pot += blindAmount;
+        state.actedThisRound.add(player.id);
+
+        if (state.actedThisRound.size === 2) {
+            state.toCall = state.bigBlind;
+            state.lastRaise = state.bigBlind;
+        }
+        return true;
     }
 
     _evaluateRoundCompletion(players: EnginePlayer[]): void {
@@ -450,11 +445,9 @@ export class BettingEngine {
         return { ...this.state };
     }
 
-    /** Begin a new betting round (flop/turn/river) */
-    beginNewBettingRound(players: EnginePlayer[]) {
+    /** begin betting is for transition to the betting from blinds */
+    beginBettingRound(players: EnginePlayer[]) {
         this.state.roundComplete = false;
-        this.state.toCall = 0;
-
         this.state.lastRaise = this.state.bigBlind;
         this.state.lastAggressor = null;
         // Reset per-player committed bets for this round
@@ -462,8 +455,13 @@ export class BettingEngine {
             p.committed = 0;
         });
         this.state.actedThisRound = new Set<string>();
-
     }
+
+    startBettingRound(players: EnginePlayer[]) {
+        this.beginBettingRound(players)
+        this.state.toCall = 0;
+    }
+
 
     isRoundComplete(players: EnginePlayer[]): boolean {
         if (!this.state.roundComplete) {

@@ -41,6 +41,18 @@ export class LocalGameStore {
   // Number of players active (2–10)
   private playerCount: number = 7;
   private currentPlayerIndex: number | null = 0;
+  private listeners: (() => void)[] = [];
+
+  subscribe(listener: () => void) {
+    this.listeners.push(listener);
+    return () => {
+      this.listeners = this.listeners.filter(l => l !== listener);
+    };
+  }
+
+  private emitChange() {
+    for (const l of this.listeners) l();
+  }
 
   constructor() {
     this.gameEngine = new TexasHoldemEngine();
@@ -69,7 +81,7 @@ export class LocalGameStore {
   // Accessors
   // ---------------------------------------------------
   getCurrentPlayer(): EnginePlayer | null {
-    const engineState = this.gameEngine.getPublicState();
+    const engineState = this.gameEngine.getPublicState(); // the engine's public state has actual players
     const players = engineState.players;
     return this.currentPlayerIndex != null ? players[this.currentPlayerIndex] : null;
   }
@@ -128,20 +140,25 @@ export class LocalGameStore {
   }
   applyPlayerSpecialAction(id: string, action: SpecialAction): boolean {
 
-    const engineState = this.gameEngine.getPublicState();
-    const player = engineState.players.find(p => p.id === id) || null;
+    const engineState = this.getPublicState();
+    const publicPlayers = engineState.players;
+    const enginePlayers = this.gameEngine.getPublicState().players;
+    const enginePlayer = enginePlayers.find(p => p.id === id);
 
-    const ok = this.bettingEngine.applyPlayerSpecialAction(player, action);
+    const ok = this.bettingEngine.applyPlayerSpecialAction(enginePlayer, action);
     const beforeDeal = engineState.state === "Blinds & Ante";
-    const blindsPlayers = engineState.players.filter(p => p.isBigBlind || p.isSmallBlind);
+    const blindsPlayers = publicPlayers.filter(p => p.isBigBlind || p.isSmallBlind);
     const acted = this.bettingEngine.getState().actedThisRound;
 
     if (ok && beforeDeal && blindsPlayers.length === 2 && acted.has(blindsPlayers[0].id) && acted.has(blindsPlayers[1].id)) {
       this.step();
-      this.startBettingRound();
+      this.beginBetting();
     }
     return ok;
   }
+
+
+  // the store's public state has -copies- of the players with added info
   getPublicState(): EnginePublicState {
     const engineState = this.gameEngine.getPublicState();
 
@@ -220,6 +237,7 @@ export class LocalGameStore {
   step(): boolean {
     const canContinue = this.gameEngine.step();
     this.publicState = this.getPublicState();
+    this.emitChange();
     return canContinue;
   }
 
@@ -229,6 +247,17 @@ export class LocalGameStore {
 
   advanceDealer(): void {
     this.gameEngine.nextDealer();
+    this.emitChange();
+  }
+
+  /** begin betting is for transition to the betting from blinds */
+  beginBetting() {
+    const engineState = this.gameEngine.getPublicState();
+    const dealerIndex = engineState.players.findIndex(p => p.id === engineState.dealerId);
+    const smallIndex = this.getNextActivePlayerIndex(engineState.players, dealerIndex);
+    const bigIndex = smallIndex && this.getNextActivePlayerIndex(engineState.players, smallIndex);
+    this.currentPlayerIndex = bigIndex && this.getNextActivePlayerIndex(engineState.players, bigIndex);
+    this.bettingEngine.beginBettingRound(engineState.players);
   }
 
   startBettingRound() {
@@ -237,7 +266,7 @@ export class LocalGameStore {
     const smallIndex = this.getNextActivePlayerIndex(engineState.players, dealerIndex);
     const bigIndex = smallIndex && this.getNextActivePlayerIndex(engineState.players, smallIndex);
     this.currentPlayerIndex = bigIndex && this.getNextActivePlayerIndex(engineState.players, bigIndex);
-    this.bettingEngine.beginNewBettingRound(engineState.players);
+    this.bettingEngine.startBettingRound(engineState.players);
   }
   // ---------------------------------------------------
   // Start a brand new hand with a fresh deck
@@ -306,6 +335,8 @@ export class LocalGameStore {
     this.gameEngine.setPlayers(enginePlayers.slice(0, this.playerCount));
 
     this.publicState = this.gameEngine.getPublicState();
+    this.emitChange();
+
   }
 }
 

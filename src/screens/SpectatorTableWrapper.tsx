@@ -1,5 +1,5 @@
 // src/screens/SpectatorTableWrapper.tsx
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { View, Button, Text } from "react-native";
 import SpectatorTable from "./SpectatorTable";
 import { LocalGameStore } from "../engine/LocalGameStore";
@@ -29,6 +29,13 @@ export default function SpectatorTableWrapper({ onSelectPlayer }: Props) {
   const players = store.getPlayers();
   const currentPlayer = players[playerIndex];
   const currentPlayerId = currentPlayer?.id ?? null;
+
+  useEffect(() => {
+    const unsubscribe = store.subscribe(() => {
+      refresh();
+    });
+    return unsubscribe;
+  }, [store]);
 
   // --- Dealer / next player (testing) ---
   const nextDealer = () => {
@@ -117,11 +124,11 @@ export default function SpectatorTableWrapper({ onSelectPlayer }: Props) {
       <View style={{ flexDirection: "row", justifyContent: "space-evenly", marginBottom: 10 }}>
         <Button title={store.getEngineState() === "Blinds & Ante" ? "Next Dealer" : "Next Player"}
           onPress={handleNextPlayer} />
-          <>
-            <Text style={{ alignSelf: "center", marginHorizontal: 10 }}>
-              {`${mode} ${isSpectator()?"":currentPlayer.name}`}
-            </Text>
-          </>
+        <>
+          <Text style={{ alignSelf: "center", marginHorizontal: 10 }}>
+            {`${mode} ${isSpectator() ? "" : currentPlayer.name}`}
+          </Text>
+        </>
         <EngineStateTester
           engineState={store.getEngineState()}
           onAdvanceEngine={() => { advanceEngine() }}
@@ -137,10 +144,10 @@ export default function SpectatorTableWrapper({ onSelectPlayer }: Props) {
       {/* Spectator Table */}
       <View style={{ flex: 1 }}>
 
-{mode === "spectator"? <SpectatorTable store={store} onSelectPlayer={handleSelectPlayer} /> :
-        <PlayerTable store={store} onSelectPlayer={handleSelectPlayer} displayedPlayerId={currentPlayer.id} />
+        {mode === "spectator" ? <SpectatorTable store={store} onSelectPlayer={handleSelectPlayer} /> :
+          <PlayerTable store={store} onSelectPlayer={handleSelectPlayer} displayedPlayerId={currentPlayer.id} />
 
-}
+        }
 
 
       </View>
