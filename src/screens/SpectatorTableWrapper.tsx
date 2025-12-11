@@ -7,6 +7,7 @@ import { LocalGameStore } from "../engine/LocalGameStore";
 import EngineStateTester from "../components/EngineStateTester";
 import { BACK } from "../engine/cards";
 import PlayerTable from "./PlayerTable";
+import { FlashProvider } from "../components/FlashContext";
 
 interface Props {
   onSelectPlayer: (id: string) => void;
@@ -143,12 +144,12 @@ export default function SpectatorTableWrapper({ onSelectPlayer }: Props) {
       </View>
       {/* Spectator Table */}
       <View style={{ flex: 1 }}>
-
+    <FlashProvider>
         {mode === "spectator" ? <SpectatorTable store={store} onSelectPlayer={handleSelectPlayer} /> :
           <PlayerTable store={store} onSelectPlayer={handleSelectPlayer} displayedPlayerId={currentPlayer.id} />
 
         }
-
+</FlashProvider>
 
       </View>
 

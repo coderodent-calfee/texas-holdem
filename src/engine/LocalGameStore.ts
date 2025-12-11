@@ -51,6 +51,7 @@ export class LocalGameStore {
   }
 
   private emitChange() {
+    console.log("Emitting change to listeners:", this.listeners.length);
     for (const l of this.listeners) l();
   }
 

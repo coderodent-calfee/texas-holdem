@@ -395,7 +395,7 @@ export class BettingEngine {
                 blindAmount = Math.min(player.chips, state.bigBlind / 2);
                 break;
             case "pay-big-blind":
-                blindAmount = Math.min(player.chips, state.bigBlind / 2);
+                blindAmount = Math.min(player.chips, state.bigBlind);
                 break;
             default:
                 return false;

@@ -1,5 +1,5 @@
 // src/screens/PlayerTable.tsx
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import PlayerDisplay from "../components/PlayerDisplay";
 import Card from "../components/Card";
@@ -19,6 +19,7 @@ import { noActions, PlayerAction, SPECIAL_ACTIONS, SpecialAction } from "../engi
 import { convertAmountToChipStacks } from "../components/Chip";
 import { seatPlayers } from "../engine/seating";
 import TableLayout from "../components/TableLayout";
+import { useFlashContext } from "../components/FlashContext";
 
 interface PlayerTableProps {
   store: GameStore;
@@ -30,14 +31,41 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, displa
   const [bettingMode, setBettingMode] = useState<PlayerAction | null>(null);
   const [currentPlayerId, setcurrentPlayerId] = useState(store.getCurrentPlayer()?.id);
   // --- Re-render trigger ---
-  const [, forceRender] = useState(0);
+  const [force, forceRender] = useState(0);
   const refresh = () => forceRender(x => x + 1);
+  const { triggerFlash } = useFlashContext();
 
   const { state,
     players: playersArg,
     communityCards,
     dealerId,
   } = store.getPublicState();
+
+  const prevCommunityRef = useRef<string[]>([]);
+  useEffect(() => {
+    console.log("Subscribing to GameStore changes for PlayerTable");
+    const unsubscribe = store.subscribe(() => {
+      console.log("REFRESH FROM subscription");
+      refresh();
+    });
+    return unsubscribe;
+  }, [store]);
+
+  useEffect(() => {
+    const prev = prevCommunityRef.current;
+    // Detect newly added cards
+    const newCards = communityCards.filter(card => !prev.includes(card));
+    console.log("communityCards changed:", communityCards);
+    console.log("prevCards:", prev);
+    console.log("newCards:", newCards);
+    newCards.forEach(card => {
+      console.log("Flashing card:", card);
+      triggerFlash(card);  // flashes the card wrapper
+    });
+
+    prevCommunityRef.current = [...communityCards];
+  }, [communityCards, triggerFlash, force]);
+
 
   const originalIndex = playersArg.findIndex(p => p.id === displayedPlayerId);
   const players = playersArg.slice(originalIndex).concat(playersArg.slice(0, originalIndex));
@@ -76,15 +104,14 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, displa
           const blind = players.find(p =>
             (p.isBigBlind && (action === 'pay-big-blind')) ||
             (p.isSmallBlind && (action === 'pay-small-blind')));
-          if (!blind) 
-          {
+          if (!blind) {
             throw new Error("no player to ${action}");
           }
           console.log(`Action '${action}' for ${blind?.name} `);
           store.applyPlayerSpecialAction(blind.id, action as SpecialAction);
         })
         .then(() => {
-          console.log(`Action '${action}' applied successfully; need to check if both blinds paid and move to next step`);
+          console.log(`Action '${action}' applied successfully; refreshing`);
           refresh();
         })
         .catch((err) => {
@@ -137,6 +164,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, displa
   };
 
   return (
+
     <TableLayout
       top={seatingMap.top.map((p) => (
         <View key={p.id} style={{ flex: 1, alignItems: "center" }}>
@@ -200,10 +228,17 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, displa
                   <Card key={c} code={c} width={70} height={100} />
                 ))}
               </View>
+              <button
+                onClick={() => communityCards.forEach(c => triggerFlash(c))}
+                style={{ padding: "4px 8px" }}
+              >
+                Flash Community Cards
+              </button>
             </View>
           )
       }
     />
+
   );
 };
 

@@ -3,6 +3,9 @@ import type { CardCode } from "../engine/cards";
 import { AllowedActions, BettingEngineState, PlayerAction, SpecialAction } from "./BettingEngine";
 
 export interface GameStore {
+
+  subscribe(listener: () => void) : () => void;
+  
   getCurrentPlayer(): EnginePlayer | null;
   getAllowedActions(id : string): AllowedActions;
   applyPlayerAction( action: PlayerAction, amount?: number):boolean;

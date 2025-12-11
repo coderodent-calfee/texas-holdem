@@ -16,6 +16,7 @@ import ProgressBar from "../components/ProgressBar";
 import { ONE_DOLLAR_CHIP,FIVE_DOLLAR_CHIP, TEN_DOLLAR_CHIP, TWENTY_FIVE_DOLLAR_CHIP, convertAmountToChipStacks } from "../components/Chip";
 import { seatPlayers } from "../engine/seating";
 import TableLayout from "../components/TableLayout"
+import { FlashProvider } from "../components/FlashContext";
 
 
 
@@ -37,6 +38,7 @@ const SpectatorTable: React.FC<SpectatorTableProps> = ({ store, onSelectPlayer }
   const betting = store.getBettingState();
   
   return (
+    
     <TableLayout
       top={ seatingMap.top.map((p) => (
         <View key={p.id} style={{ flex: 1, alignItems: "center" }}>
@@ -75,6 +77,7 @@ const SpectatorTable: React.FC<SpectatorTableProps> = ({ store, onSelectPlayer }
         </View>          
       }
     />
+
   );
 };
 
