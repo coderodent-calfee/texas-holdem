@@ -138,7 +138,7 @@ export class TexasHoldemEngine {
   }
 
   /** UI and store use this to render */
-  getPublicState(): EnginePublicState {
+  getEngineState(): EnginePublicState {
     return {
       state: this.state,
       players: this.players,

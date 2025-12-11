@@ -82,7 +82,7 @@ export class LocalGameStore {
   // Accessors
   // ---------------------------------------------------
   getCurrentPlayer(): EnginePlayer | null {
-    const engineState = this.gameEngine.getPublicState(); // the engine's public state has actual players
+    const engineState = this.gameEngine.getEngineState(); // the engine's public state has actual players
     const players = engineState.players;
     return this.currentPlayerIndex != null ? players[this.currentPlayerIndex] : null;
   }
@@ -99,9 +99,9 @@ export class LocalGameStore {
     const engineState = this.getPublicState();
     const players = engineState.players;
     const state = engineState.state;
+      const actedThisRound = this.getBettingState().actedThisRound;
     if (state === "Blinds & Ante") {
       const player = players.find(p => p.id === id);
-      const actedThisRound = this.getBettingState().actedThisRound;
       if (player && !actedThisRound.has(player.id)) {
         return {
           ...noActions,
@@ -113,7 +113,14 @@ export class LocalGameStore {
 
     }
     if (state === "reveal") {
-      return noActions;
+      if (!engineState.winners?.includes(id)) {
+        return noActions;
+      }
+
+      return {
+        ...noActions,
+        canClaimWinnings: engineState.winners?.includes(id) && !actedThisRound.has(id),
+      };
     }
     const currentPlayer = this.getCurrentPlayer();
     if (!currentPlayer) {
@@ -133,7 +140,7 @@ export class LocalGameStore {
         this.startBettingRound();
       }
       else {
-        const engineState = this.gameEngine.getPublicState();
+        const engineState = this.gameEngine.getEngineState();
         this.currentPlayerIndex = this.getNextActivePlayerIndex(engineState.players, this.currentPlayerIndex!);
       }
     }
@@ -143,7 +150,7 @@ export class LocalGameStore {
 
     const engineState = this.getPublicState();
     const publicPlayers = engineState.players;
-    const enginePlayers = this.gameEngine.getPublicState().players;
+    const enginePlayers = this.gameEngine.getEngineState().players;
     const enginePlayer = enginePlayers.find(p => p.id === id);
 
     const ok = this.bettingEngine.applyPlayerSpecialAction(enginePlayer, action);
@@ -158,10 +165,47 @@ export class LocalGameStore {
     return ok;
   }
 
+  claimWinnings(playerId: string): boolean {
+    const engineState = this.gameEngine.getEngineState();
+    const acted = this.bettingEngine.getState().actedThisRound;
+
+    if (engineState.state !== "reveal") return false;
+    if (!engineState.winners?.includes(playerId)) return false;
+    if (acted.has(playerId)) return false;
+
+    const player = this.gameEngine.getEngineState().players.find(p => p.id === playerId);
+    if (!player) return false;
+
+    // Determine how many winners have not claimed yet
+    const unclaimedWinners = engineState.winners.filter(w => !acted.has(w));
+
+    // Split the pot evenly among unclaimed winners
+    const potAmount = this.bettingEngine.getState().pot;
+    const share = Math.floor(potAmount / unclaimedWinners.length);
+
+    // Add share to this player
+    this.bettingEngine.distributePot(player, share);
+
+    acted.add(playerId);
+
+    this.emitChange();
+    return true;
+  }
+
+  autoClaimRemainingWinners() {
+    const engineState = this.gameEngine.getEngineState();
+    const acted = this.bettingEngine.getState().actedThisRound;
+
+    engineState.winners?.forEach(w => {
+      if (!acted.has(w)) {
+        this.claimWinnings(w);
+      }
+    });
+  }
 
   // the store's public state has -copies- of the players with added info
   getPublicState(): EnginePublicState {
-    const engineState = this.gameEngine.getPublicState();
+    const engineState = this.gameEngine.getEngineState();
 
     const players = engineState.players;
     const dealerIndex = players.findIndex(p => p.id === engineState.dealerId);
@@ -197,7 +241,7 @@ export class LocalGameStore {
   }
 
   getHoleCards(playerId: string): [CardCode, CardCode] | null {
-    const engineState = this.gameEngine.getPublicState();
+    const engineState = this.gameEngine.getEngineState();
     const player = engineState.players.find(p => p.id === playerId);
     if (!player) return null;
     return player.holeCards;
@@ -253,7 +297,7 @@ export class LocalGameStore {
 
   /** begin betting is for transition to the betting from blinds */
   beginBetting() {
-    const engineState = this.gameEngine.getPublicState();
+    const engineState = this.gameEngine.getEngineState();
     const dealerIndex = engineState.players.findIndex(p => p.id === engineState.dealerId);
     const smallIndex = this.getNextActivePlayerIndex(engineState.players, dealerIndex);
     const bigIndex = smallIndex && this.getNextActivePlayerIndex(engineState.players, smallIndex);
@@ -262,7 +306,7 @@ export class LocalGameStore {
   }
 
   startBettingRound() {
-    const engineState = this.gameEngine.getPublicState();
+    const engineState = this.gameEngine.getEngineState();
     const dealerIndex = engineState.players.findIndex(p => p.id === engineState.dealerId);
     const smallIndex = this.getNextActivePlayerIndex(engineState.players, dealerIndex);
     const bigIndex = smallIndex && this.getNextActivePlayerIndex(engineState.players, smallIndex);
@@ -335,7 +379,7 @@ export class LocalGameStore {
 
     this.gameEngine.setPlayers(enginePlayers.slice(0, this.playerCount));
 
-    this.publicState = this.gameEngine.getPublicState();
+    this.publicState = this.gameEngine.getEngineState();
     this.emitChange();
 
   }

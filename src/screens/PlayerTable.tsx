@@ -101,14 +101,34 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, displa
     if (SPECIAL_ACTIONS.includes(action as SpecialAction)) {
       Promise.resolve()
         .then(() => {
-          const blind = players.find(p =>
-            (p.isBigBlind && (action === 'pay-big-blind')) ||
-            (p.isSmallBlind && (action === 'pay-small-blind')));
-          if (!blind) {
-            throw new Error("no player to ${action}");
+          if (
+            (action === 'pay-big-blind') ||
+            (action === 'pay-small-blind')) {
+
+            const blind = players.find(p =>
+              (p.isBigBlind && (action === 'pay-big-blind')) ||
+              (p.isSmallBlind && (action === 'pay-small-blind')));
+            if (!blind) {
+              throw new Error(`no player to ${action}`);
+            }
+            console.log(`Action '${action}' for ${blind?.name} `);
+            store.applyPlayerSpecialAction(blind.id, action as SpecialAction);
+            return
           }
-          console.log(`Action '${action}' for ${blind?.name} `);
-          store.applyPlayerSpecialAction(blind.id, action as SpecialAction);
+
+          if (action === 'claim-winnings') {
+            const winner = players.find(p =>
+              store.getPublicState().winners?.includes(p.id)
+            );
+            if (!winner) {
+              throw new Error(`no player to ${action}`);
+            }
+            console.log(`Action '${action}' for ${winner?.name} `);
+            store.claimWinnings(winner!.id);
+            return;
+          }
+          throw new Error(`no handler for ${action}`);
+
         })
         .then(() => {
           console.log(`Action '${action}' applied successfully; refreshing`);
@@ -178,6 +198,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, displa
             isSelf // drawing a not 'me' window
             ?
             store.getAllowedActions(p.id) : noActions;
+        console.log(`Player:${p.name} allowed moves:`, allowedMoves);
         return (
           <View key={p.id} style={{ flex: 1, alignItems: "center" }}>
             <PlayerDisplay

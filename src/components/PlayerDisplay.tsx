@@ -92,6 +92,12 @@ const PlayerDisplayComponent = ({
                     onPress={() => handlePlayerAction?.("pay-big-blind")}
                   />
                 )}
+                {allowedMoves.canClaimWinnings && (
+                  <Button
+                    title="Collect"
+                    onPress={() => handlePlayerAction?.("claim-winnings")}
+                  />
+                )}
               </>
             )}
           {isActive && isSelf &&
@@ -100,7 +106,8 @@ const PlayerDisplayComponent = ({
                 {Object.entries(allowedMoves).map(([key, value]) => {
                   if (
                     key === "canPaySmallBlind" ||
-                    key === "canPayBigBlind"
+                    key === "canPayBigBlind" ||
+                    key === "canClaimWinnings"
                   ) {
                     return null;
                   }
@@ -119,7 +126,7 @@ const PlayerDisplayComponent = ({
                   );
                 })}
               </>
-            )}            
+            )}
         </View>
       </View>
     </Pressable>

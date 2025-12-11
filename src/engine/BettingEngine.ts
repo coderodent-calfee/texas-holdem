@@ -12,7 +12,8 @@ export type BettingAction = (typeof BETTING_ACTIONS)[number];
 
 export const SPECIAL_ACTIONS = [
     "pay-small-blind",
-    "pay-big-blind"
+    "pay-big-blind",
+    "claim-winnings",
 ] as const;
 export type SpecialAction = (typeof SPECIAL_ACTIONS)[number];
 
@@ -38,6 +39,7 @@ export interface AllowedActions {
     canAllIn: boolean;
     canPaySmallBlind?: boolean;
     canPayBigBlind?: boolean;
+    canClaimWinnings?: boolean;
 }
 
 export const noActions: AllowedActions = {
@@ -52,7 +54,8 @@ export const noActions: AllowedActions = {
     minRaise: null,
     maxBet: 0,
 
-    canAllIn: false
+    canAllIn: false,
+    canClaimWinnings: false,
 };
 
 export interface BettingEngineState {
@@ -468,5 +471,10 @@ export class BettingEngine {
             this._evaluateRoundCompletion(players);
         }
         return this.state.roundComplete;
+    }
+
+    distributePot(winner: EnginePlayer, share:number): void {
+        winner.chips += share;
+        this.state.pot -= share;
     }
 }

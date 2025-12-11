@@ -10,6 +10,7 @@ export interface GameStore {
   getAllowedActions(id : string): AllowedActions;
   applyPlayerAction( action: PlayerAction, amount?: number):boolean;
   applyPlayerSpecialAction(id:string, action: SpecialAction): boolean ;
+  claimWinnings(playerId: string): boolean;
   getBettingState(): BettingEngineState;
   // Accessors
   getEngineState(): EngineState;
