@@ -42,6 +42,8 @@ export class LocalGameStore {
   private playerCount: number = 7;
   private currentPlayerIndex: number | null = 0;
   private listeners: (() => void)[] = [];
+  private revealCountdown: number | undefined = undefined;
+  private countdownTimer: any = null;
 
   subscribe(listener: () => void) {
     this.listeners.push(listener);
@@ -99,7 +101,7 @@ export class LocalGameStore {
     const engineState = this.getPublicState();
     const players = engineState.players;
     const state = engineState.state;
-      const actedThisRound = this.getBettingState().actedThisRound;
+    const actedThisRound = this.getBettingState().actedThisRound;
     if (state === "Blinds & Ante") {
       const player = players.find(p => p.id === id);
       if (player && !actedThisRound.has(player.id)) {
@@ -110,13 +112,12 @@ export class LocalGameStore {
         };
       }
       return noActions;
-
     }
+
     if (state === "reveal") {
       if (!engineState.winners?.includes(id)) {
         return noActions;
       }
-
       return {
         ...noActions,
         canClaimWinnings: engineState.winners?.includes(id) && !actedThisRound.has(id),
@@ -235,6 +236,7 @@ export class LocalGameStore {
       }));
       return {
         ...engineState,
+        revealCountdown: this.revealCountdown,
         players: publicPlayers
       }
     }
@@ -274,6 +276,38 @@ export class LocalGameStore {
     return null; // all players folded
   }
 
+  startRevealCountdown() {
+
+    if (this.revealCountdown) return; // already running
+
+    this.revealCountdown = 30; // seconds
+    console.log("revealCountdown started");
+
+    this.countdownTimer = setInterval(() => {
+      if (this.revealCountdown! > 0) {
+        this.revealCountdown!--;
+        console.log(`revealCountdown: ${this.revealCountdown}`);
+        
+        this.emitChange();
+      }
+
+      if (this.revealCountdown === 0) {
+        clearInterval(this.countdownTimer);
+        this.countdownTimer = null;
+        this.finishRevealStage();
+      }
+
+    }, 1000);
+  }
+
+  finishRevealStage() {
+    this.revealCountdown = undefined;
+    this.autoClaimRemainingWinners();
+    this.resetHand();
+    this.advanceDealer();
+    this.emitChange();
+  }
+
   // ---------------------------------------------------
   // Advance the game by one engine action
   // (for local testing this might simulate dealing,
@@ -282,6 +316,12 @@ export class LocalGameStore {
   step(): boolean {
     const canContinue = this.gameEngine.step();
     this.publicState = this.getPublicState();
+
+    if (this.publicState.state === "reveal") {
+    console.log("startRevealCountdown");
+      this.startRevealCountdown();
+    }
+
     this.emitChange();
     return canContinue;
   }
@@ -314,7 +354,7 @@ export class LocalGameStore {
     this.bettingEngine.startBettingRound(engineState.players);
   }
   // ---------------------------------------------------
-  // Start a brand new hand with a fresh deck
+  // Start a brand new hand with a supplied deck
   // ---------------------------------------------------
   resetHandWithDeck(deck: CardCode[]) {
     this.gameEngine.resetHandWithDeck(deck);
@@ -322,7 +362,7 @@ export class LocalGameStore {
   }
 
   // ---------------------------------------------------
-  // Start a brand new hand but keep the current deck
+  // Start a brand new hand with a shuffled deck
   // ---------------------------------------------------
   resetHand() {
     this.gameEngine.resetHand();

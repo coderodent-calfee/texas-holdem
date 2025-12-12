@@ -35,10 +35,12 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, displa
   const refresh = () => forceRender(x => x + 1);
   const { triggerFlash } = useFlashContext();
 
-  const { state,
+  const {
+    state,
     players: playersArg,
     communityCards,
     dealerId,
+    revealCountdown,
   } = store.getPublicState();
 
   const prevCommunityRef = useRef<string[]>([]);
@@ -183,6 +185,8 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, displa
     setBettingMode(null);
   };
 
+
+
   return (
 
     <TableLayout
@@ -242,6 +246,11 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, displa
               <ChipSVG size={100}
                 stacks={convertAmountToChipStacks(betting.pot)}
               ></ChipSVG>
+              {revealCountdown && (
+                <div className="reveal-timer">
+                  Next hand in: {revealCountdown}
+                </div>
+              )}
               <Text style={{ fontSize: 20, fontWeight: "bold" }}>Player Table Pot: {betting.pot}</Text>
               <Text>Live Bet: {betting.toCall}</Text>
               <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>

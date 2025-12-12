@@ -37,6 +37,7 @@ export interface EnginePublicState {
   dealerId: string;
   scores?: Record<string, HandScore>;
   winners?: string[];
+  revealCountdown?: number;
 }
 
 export class TexasHoldemEngine {

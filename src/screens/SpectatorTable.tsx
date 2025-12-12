@@ -63,15 +63,11 @@ const SpectatorTable: React.FC<SpectatorTableProps> = ({ store, onSelectPlayer }
           <ChipSVG 
             size={100}
             stacks={convertAmountToChipStacks(betting.pot)} />
-          <>
-            <Text style={{ fontSize: 20, fontWeight: "bold" }}>Spectator Table Pot: {betting.pot}</Text>
-          </>
-          <>
-            <Text>Live Bet: {betting.toCall}</Text>
-          </>          
+          <Text style={{ fontSize: 20, fontWeight: "bold" }}>Spectator Table Pot: {betting.pot}</Text>
+          <Text>Live Bet: {betting.toCall}</Text>
           <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>
             {communityCards.map((c) => (
-            <Card key={c} code={c} width={70} height={100} />
+              <Card key={c} code={c} width={70} height={100} />
             ))}
           </View>
         </View>          
