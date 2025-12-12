@@ -100,47 +100,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, displa
   console.log(`Player:${player.name} betting state: `, betting);
 
   const handlePlayerAction = (action: PlayerAction) => {
-    if (SPECIAL_ACTIONS.includes(action as SpecialAction)) {
-      Promise.resolve()
-        .then(() => {
-          if (
-            (action === 'pay-big-blind') ||
-            (action === 'pay-small-blind')) {
 
-            const blind = players.find(p =>
-              (p.isBigBlind && (action === 'pay-big-blind')) ||
-              (p.isSmallBlind && (action === 'pay-small-blind')));
-            if (!blind) {
-              throw new Error(`no player to ${action}`);
-            }
-            console.log(`Action '${action}' for ${blind?.name} `);
-            store.applyPlayerSpecialAction(blind.id, action as SpecialAction);
-            return
-          }
-
-          if (action === 'claim-winnings') {
-            const winner = players.find(p =>
-              store.getPublicState().winners?.includes(p.id)
-            );
-            if (!winner) {
-              throw new Error(`no player to ${action}`);
-            }
-            console.log(`Action '${action}' for ${winner?.name} `);
-            store.claimWinnings(winner!.id);
-            return;
-          }
-          throw new Error(`no handler for ${action}`);
-
-        })
-        .then(() => {
-          console.log(`Action '${action}' applied successfully; refreshing`);
-          refresh();
-        })
-        .catch((err) => {
-          console.log(`Action '${action}' failed:`, err);
-        });
-      return;
-    }
     console.log(`Action '${action}' for ${store.getCurrentPlayer()?.name} `);
     // Bet or raise opens BetAmountSelector
     if (action === "bet" || action === "raise") {

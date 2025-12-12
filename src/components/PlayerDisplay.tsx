@@ -79,19 +79,7 @@ const PlayerDisplayComponent = ({
           {isSelf &&
             allowedMoves && (
               <>
-                {allowedMoves.canPaySmallBlind && (
-                  <Button
-                    title="Post Blind"
-                    onPress={() => handlePlayerAction?.("pay-small-blind")}
-                  />
-                )}
 
-                {allowedMoves.canPayBigBlind && (
-                  <Button
-                    title="Post Blind"
-                    onPress={() => handlePlayerAction?.("pay-big-blind")}
-                  />
-                )}
                 {allowedMoves.canClaimWinnings && (
                   <Button
                     title="Collect"

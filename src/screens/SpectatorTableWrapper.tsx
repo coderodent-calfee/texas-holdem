@@ -51,7 +51,7 @@ export default function SpectatorTableWrapper({ onSelectPlayer }: Props) {
   };
 
   const handleNextPlayer = () => {
-    store.getEngineState() === "Blinds & Ante" ? nextDealer() : nextPlayer();
+     nextPlayer();
   };
 
   const handleSelectPlayer = (id: string) => {
@@ -123,7 +123,7 @@ export default function SpectatorTableWrapper({ onSelectPlayer }: Props) {
 
       {/* Engine State Tester */}
       <View style={{ flexDirection: "row", justifyContent: "space-evenly", marginBottom: 10 }}>
-        <Button title={store.getEngineState() === "Blinds & Ante" ? "Next Dealer" : "Next Player"}
+        <Button title="Next Player"
           onPress={handleNextPlayer} />
         <>
           <Text style={{ alignSelf: "center", marginHorizontal: 10 }}>

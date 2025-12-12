@@ -37,8 +37,6 @@ export interface AllowedActions {
 
     // helper: Is player allowed to go all-in (always true unless already all-in)
     canAllIn: boolean;
-    canPaySmallBlind?: boolean;
-    canPayBigBlind?: boolean;
     canClaimWinnings?: boolean;
 }
 
@@ -119,7 +117,7 @@ export class BettingEngine {
             // Player may open the betting with a bet
             //
             canBet = chips > 0;
-            minBet = Math.min(chips, this.state.bigBlind); // standard rule
+            minBet = Math.min(chips, this.state.bigBlind);
             minRaise = null; // no raise because no bet exists yet
         } else {
             //
@@ -371,25 +369,25 @@ export class BettingEngine {
         }
     }
 
-    applyPlayerSpecialAction(player: EnginePlayer | undefined, action: SpecialAction): boolean {
+   postBlind(player: EnginePlayer | undefined, action: SpecialAction): boolean {
         if (!player) {
-            console.log("applyPlayerSpecialAction no player");
+            console.log("postBlind no player");
             return false;
         }
-        console.log(`applyPlayerSpecialAction ${player.name} `, player);
+        console.log(`postBlind ${player.name} `, player);
 
         if ((player.isBigBlind) === (action !== "pay-big-blind")) {
-            console.log(`applyPlayerSpecialAction ${action} player is not big blind`);
+            console.log(`postBlind ${action} player is not big blind`);
             return false;
         }
         if ((player.isSmallBlind) === (action !== "pay-small-blind")) {
-            console.log(`applyPlayerSpecialAction ${action} player is not small blind`);
+            console.log(`postBlind ${action} player is not small blind`);
             return false;
         }
         const state = this.state;
 
         if (state.actedThisRound.has(player.id)) {
-            console.log(`applyPlayerSpecialAction ${action} player has acted`);
+            console.log(`postBlind ${action} player has acted`);
             return false;
         }
         let blindAmount = 0;
@@ -406,15 +404,16 @@ export class BettingEngine {
         player.chips -= blindAmount;
         player.committed += blindAmount;
         state.pot += blindAmount;
+
+        state.lastRaise = blindAmount;   // opening bet sets the raise size
+        state.toCall = player.committed;
+        state.lastAggressor = player.id;
+
+        state.actedThisRound.clear();
         state.actedThisRound.add(player.id);
 
-        if (state.actedThisRound.size === 2) {
-            state.toCall = state.bigBlind;
-            state.lastRaise = state.bigBlind;
-        }
         return true;
     }
-
     _evaluateRoundCompletion(players: EnginePlayer[]): void {
         const activePlayers = players.filter(p => !p.folded);
 
@@ -464,7 +463,6 @@ export class BettingEngine {
         this.beginBettingRound(players)
         this.state.toCall = 0;
     }
-
 
     isRoundComplete(players: EnginePlayer[]): boolean {
         if (!this.state.roundComplete) {

@@ -4,7 +4,6 @@ import { scoreHand, HandScore, determineWinners } from "./handScorer"; // your s
 
 
 export const ENGINE_STATES = [
-  "Blinds & Ante",
   "Pre-Flop Bet",
   "flop",
   "turn",
@@ -48,7 +47,7 @@ export class TexasHoldemEngine {
   private players: EnginePlayer[] = [];
   private communityCards: CardCode[] = [];
   private deck: CardCode[] = [];
-  private state: EngineState = "Blinds & Ante";
+  private state: EngineState = "Pre-Flop Bet";
 
   private dealerId = "";
   private scores: Record<string, HandScore> = {};
@@ -84,9 +83,6 @@ export class TexasHoldemEngine {
    */
   step(): boolean {
     switch (this.state) {
-      case "Blinds & Ante":
-        return this.doDeal();
-
       case "Pre-Flop Bet":
         return this.doPreflop();
 
@@ -169,8 +165,9 @@ export class TexasHoldemEngine {
     if (this.players.length > 0) {
       this.dealerId = this.players[0].id;
     }
-    this.state = "Blinds & Ante";
+
     this.scores = {};
+    this.doDeal()
   }
 
   private doDeal(): boolean {
@@ -242,6 +239,4 @@ export class TexasHoldemEngine {
     this.state = "reveal";
     return false;
   }
-
-
 }
