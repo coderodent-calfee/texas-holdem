@@ -63,7 +63,7 @@ export class LocalGameStore {
     this.initializeFromFake();
     // Capture initial public state
     this.publicState = this.getPublicState();
-     this.initPreflopBlinds();
+    this.initPreflopBlinds();
   }
 
   // ---------------------------------------------------
@@ -231,21 +231,7 @@ export class LocalGameStore {
   * @param startIndex Index to start searching from (exclusive)
   */
   getNextActivePlayerIndex(players: EnginePlayer[], startIndex: number): number | null {
-    const total = players.length;
-    if (total === 0) return null;
-
-    let idx = (startIndex + 1) % total;
-
-    while (idx !== startIndex) {
-      const player = players[idx];
-      if (!player.folded) return idx;
-      idx = (idx + 1) % total;
-    }
-
-    // check if the startIndex player is active (edge case: only one active player)
-    if (!players[startIndex].folded) return startIndex;
-
-    return null; // all players folded
+    return this.gameEngine.getNextActivePlayerIndex(players, startIndex);
   }
 
   startRevealCountdown() {
@@ -259,7 +245,6 @@ export class LocalGameStore {
       if (this.revealCountdown! > 0) {
         this.revealCountdown!--;
         console.log(`revealCountdown: ${this.revealCountdown}`);
-
         this.emitChange();
       }
 
@@ -308,12 +293,51 @@ export class LocalGameStore {
     this.emitChange();
   }
 
+
+  private async initPreflopBlinds() {
+    const engineState = this.gameEngine.getEngineState();
+    const players = engineState.players;
+    // Reset BettingEngine for new round
+    this.bettingEngine.beginBettingRound(players);
+    // --- Find dealer, small blind, big blind ---
+    const dealerIndex = players.findIndex(p => p.id === engineState.dealerId);
+    const smallIndex = this.getNextActivePlayerIndex(players, dealerIndex);
+    const bigIndex = this.getNextActivePlayerIndex(players, smallIndex!);
+
+    if (smallIndex == null || bigIndex == null) return;
+
+    // --- 1. Small Blind posts automatically ---
+    this.currentPlayerIndex = smallIndex;
+    const smallBlindPlayer = this.getCurrentPlayer();
+    if (smallBlindPlayer) {
+      this.bettingEngine.postBlind(smallBlindPlayer, "pay-small-blind");
+      this.emitChange();       // UI sees SB chip flash
+      await this.wait(3000);   // 3s delay
+    }
+
+    // --- 2. Big Blind posts automatically ---
+    this.currentPlayerIndex = bigIndex;
+    const bigBlindPlayer = this.getCurrentPlayer();
+    if (bigBlindPlayer) {
+      this.bettingEngine.postBlind(bigBlindPlayer, "pay-big-blind");
+      this.emitChange();       // UI sees BB chip flash
+      await this.wait(3000);   // 3s delay
+    }
+
+    // --- 3. Start pre-flop betting ---
+    const firstToActIndex = this.getNextActivePlayerIndex(players, bigIndex);
+    this.currentPlayerIndex = firstToActIndex;
+
+    this.emitChange();
+  }
+
   startBettingRound() {
     const engineState = this.gameEngine.getEngineState();
     const dealerIndex = engineState.players.findIndex(p => p.id === engineState.dealerId);
-    const smallIndex = this.getNextActivePlayerIndex(engineState.players, dealerIndex);
-    const bigIndex = smallIndex && this.getNextActivePlayerIndex(engineState.players, smallIndex);
-    this.currentPlayerIndex = bigIndex && this.getNextActivePlayerIndex(engineState.players, bigIndex);
+    const currentPlayerIndex = this.gameEngine.getNextActivePlayerIndex(engineState.players, dealerIndex);
+
+    this.currentPlayerIndex = currentPlayerIndex;
+    
     this.bettingEngine.startBettingRound(engineState.players);
     this.emitChange();
   }
@@ -386,44 +410,6 @@ export class LocalGameStore {
     this.publicState = this.gameEngine.getEngineState();
     this.emitChange();
 
-  }
-
-
-  private async initPreflopBlinds() {
-    const engineState = this.gameEngine.getEngineState();
-    const players = engineState.players;
-    // Reset BettingEngine for new round
-    this.bettingEngine.beginBettingRound(players);
-    // --- Find dealer, small blind, big blind ---
-    const dealerIndex = players.findIndex(p => p.id === engineState.dealerId);
-    const smallIndex = this.getNextActivePlayerIndex(players, dealerIndex);
-    const bigIndex = this.getNextActivePlayerIndex(players, smallIndex!);
-
-    if (smallIndex == null || bigIndex == null) return;
-
-    // --- 1. Small Blind posts automatically ---
-    this.currentPlayerIndex = smallIndex;
-    const smallBlindPlayer = this.getCurrentPlayer();
-    if (smallBlindPlayer) {
-      this.bettingEngine.postBlind(smallBlindPlayer, "pay-small-blind");
-      this.emitChange();       // UI sees SB chip flash
-      await this.wait(3000);   // 3s delay
-    }
-
-    // --- 2. Big Blind posts automatically ---
-    this.currentPlayerIndex = bigIndex;
-    const bigBlindPlayer = this.getCurrentPlayer();
-    if (bigBlindPlayer) {
-      this.bettingEngine.postBlind(bigBlindPlayer, "pay-big-blind");
-      this.emitChange();       // UI sees BB chip flash
-      await this.wait(3000);   // 3s delay
-    }
-
-    // --- 3. Start pre-flop betting ---
-    const firstToActIndex = this.getNextActivePlayerIndex(players, bigIndex);
-    this.currentPlayerIndex = firstToActIndex;
-
-    this.emitChange();
   }
 
 

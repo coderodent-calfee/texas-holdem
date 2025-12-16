@@ -105,33 +105,45 @@ export class TexasHoldemEngine {
     // should never get here, but return false defensively
     return false;
   }
+  findNextPlayer<T>(
+    list: T[],
+    startIndex: number,
+    testFn: (item: T) => boolean
+  ): number | null {
+    if (list.length === 0) return null;
 
-  public nextDealer(): void {
-    const players = this.players;
-    const count = players.length;
+    const n = list.length;
+    let i = startIndex;
 
-    if (count === 0) return;
-
-    // Find current dealer index (or start before 0 if unset)
-    const currentIndex = players.findIndex(p => p.id === this.dealerId);
-    const startIndex = currentIndex >= 0 ? currentIndex : -1;
-
-    let nextIndex = startIndex;
-
-    // Rotate forward looking for a player with chips > 0
-    for (let i = 1; i <= count; i++) {
-      const candidate = (startIndex + i) % count;
-      if (players[candidate].chips > 0) {
-        nextIndex = candidate;
-        break;
+    // We advance **once** before checking, so the starting index is not considered.
+    for (let step = 1; step <= n; step++) {
+      const idx = (i + step) % n;
+      if (testFn(list[idx])) {
+        return idx;
       }
     }
 
-    // If we found no eligible player, do nothing
-    if (nextIndex === startIndex) return;
+    return null; // Nobody matched
+  }
+  /**
+   * Returns the next active player index, skipping folded players.
+   * @param players EnginePlayer array
+   * @param startIndex Index to start searching from (exclusive)
+   */
+  getNextActivePlayerIndex(players: EnginePlayer[], startIndex: number): number | null {
+    return this.findNextPlayer<EnginePlayer>(
+      players,
+      startIndex,
+      (p) => (!p.folded && p.chips > 0)
+    );
+  }
 
+  public nextDealer(): void {
+    const dealerIndex = this.players.findIndex(p => p.id === this.dealerId);
+    const nextIndex = this.getNextActivePlayerIndex(this.players, dealerIndex);    // If we found no eligible player, do nothing
+    if (!nextIndex || nextIndex === dealerIndex) return;
     // Assign new dealerId
-    this.dealerId = players[nextIndex].id;
+    this.dealerId = this.players[nextIndex].id;
   }
 
   /** UI and store use this to render */
