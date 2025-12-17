@@ -187,7 +187,7 @@ export class LocalGameStore {
     const smallBlindIndex = dealerIndex >= 0 ? (dealerIndex + 1) % players.length : -1;
     const bigBlindIndex = dealerIndex >= 0 ? (dealerIndex + 2) % players.length : -1;
 
-    const beforeDeal = engineState.state === "Pre-Flop Bet";
+    const beforeDeal = false;
     if (engineState.state !== "reveal") {
       const publicPlayers: EnginePlayer[] = players.map((p, i) => ({
         ...p,

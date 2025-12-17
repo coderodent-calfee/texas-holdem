@@ -17,6 +17,8 @@ import { ONE_DOLLAR_CHIP,FIVE_DOLLAR_CHIP, TEN_DOLLAR_CHIP, TWENTY_FIVE_DOLLAR_C
 import { seatPlayers } from "../engine/seating";
 import TableLayout from "../components/TableLayout"
 import { FlashProvider } from "../components/FlashContext";
+import AnnouncementBurst from "../components/AnnouncementBurst";
+import AnnouncementOverlay from "../components/AnnouncementOverlay";
 
 
 
@@ -70,6 +72,15 @@ const SpectatorTable: React.FC<SpectatorTableProps> = ({ store, onSelectPlayer }
               <Card key={c} code={c} width={70} height={100} />
             ))}
           </View>
+  <AnnouncementOverlay
+  messages={[
+    state
+  ]}
+  color="cyan"
+  maxScale={10}
+  scaleDurationMs={3000}
+/>
+
         </View>          
       }
     />

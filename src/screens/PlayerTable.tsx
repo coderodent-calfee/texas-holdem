@@ -20,6 +20,7 @@ import { convertAmountToChipStacks } from "../components/Chip";
 import { seatPlayers } from "../engine/seating";
 import TableLayout from "../components/TableLayout";
 import { useFlashContext } from "../components/FlashContext";
+import AnnouncementBurst from "../components/AnnouncementBurst";
 
 interface PlayerTableProps {
   store: GameStore;
@@ -199,10 +200,17 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ store, onSelectPlayer, displa
             </View>
           ) :
           (
+                
             <View style={{
               alignItems: "center",
               minHeight: 154,
             }}>
+                    <AnnouncementBurst
+  messages={[state.toUpperCase()]}
+  color="#1eff00ff"
+  durationMs={3000}
+  maxScale={8}
+/>
               <ChipSVG size={100}
                 stacks={convertAmountToChipStacks(betting.pot)}
               ></ChipSVG>
